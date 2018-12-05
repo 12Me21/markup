@@ -1,3 +1,8 @@
+highlighters = {
+	"smilebasic": __import__("sbhighlight").html
+	"sbsyntax": __import__("sbsyntax").html
+}
+
 def highlight(code, language):
 	return code
 
@@ -15,6 +20,10 @@ def escape_html_char(char):
 		return ""
 	return char
 #maybe remove \n if last element was a block or something...
+
+#warning: only works in quoted attributes
+def escape_html_attribute(code):
+	return code.replace("&","&amp;").replace('"',"&quot;")
 
 def parse(code):
 	i = -1
@@ -64,6 +73,14 @@ def parse(code):
 		else:
 			return symbol
 	
+	def markup_exception(message):
+		nonlocal i
+		return Exception("%s\nOn line %d" % (message, get_line(i)))
+	
+	def get_line(pos):
+		nonlocal code
+		return code[0:pos].count("\n")+1
+	
 	def parse():
 		nonlocal i,c
 		output=""
@@ -85,7 +102,7 @@ def parse(code):
 							elif c:
 								language += c
 							else:
-								raise Exception("Reached end of input while reading ``` start")
+								raise markup_exception("Reached end of input while reading code block language")
 						start = i+1
 						while 1:
 							next()
@@ -96,7 +113,7 @@ def parse(code):
 									if c=="`":
 										break;
 							if not c:
-								raise Exception("Reached end of input while reading code inside ```")
+								raise markup_exception("Reached end of input while reading code inside code block")
 						output += highlight(code[start:i-2], language.strip())
 						output += "</code>"
 						next()
@@ -115,7 +132,7 @@ def parse(code):
 						elif c:
 							output += escape_html_char(c)
 						else:
-							raise Exception("Unclosed ` block")
+							raise markup_exception("Unclosed ` block")
 						next()
 					next()
 			## heading and bold
@@ -127,14 +144,14 @@ def parse(code):
 						heading_level += 1
 						next()
 					if heading_level > 6:
-						raise Exception("Heading too deep")
+						raise markup_exception("Heading too deep")
 					if c==" ":
 						output += "<h%d>" % heading_level
 						next()
-						stack.append("heading%d" % heading_level)
+						stack.append("Heading%d" % heading_level)
 						continue
 					elif heading_level!=1:
-						raise Exception("Missing space after heading")
+						raise markup_exception("Missing space after heading")
 						continue
 				else:
 					next()
@@ -168,6 +185,38 @@ def parse(code):
 				if c:
 					output += escape_html_char(c)
 					next()
+			## link
+			elif c=="[":
+				next()
+				if c=="[":
+					next()
+					start = i
+					while 1:
+						next()
+						if c=="]":
+							next()
+							if c=="[" or c=="]":
+								break
+						elif not c:
+							raise markup_exception("Unclosed link")
+					output += '<a href="' + escape_html_attribute(code[start:i-1]) + '">'
+					if c=="]":
+						output += escape_html(code[start:i-1]) + "</a>"
+						next()
+					else:
+						next()
+						stack.append("link")
+				else:
+					output+="["
+			#link end
+			elif c=="]":
+				next()
+				if c=="]" and stack and stack[-1] == "link":
+					next()
+					stack.pop()
+					output += "</a>"
+				else:
+					output+="]"
 			## tables
 			elif c=="|":
 				next()
@@ -176,10 +225,10 @@ def parse(code):
 					next()
 					while c=="=": next()
 					if c=="|": next()
-					else: raise Exception("missing | in table start")
+					else: raise markup_exception("Missing | in table start")
 					skip_whitespace()
 					if c=="|": next()
-					else: raise Exception("missing | in table start")
+					else: raise markup_exception("Missing | in table start")
 					stack.append("table")
 					output += "<table><tbody><tr><td>"
 					skip_linebreak()
@@ -195,7 +244,7 @@ def parse(code):
 								next()
 								while c=="=": next()
 								if c=="|": next()
-								else: raise Exception("missing | in table end at %d" % i)
+								else: raise markup_exception("Missing | in table end")
 								stack.pop()
 								output += "</td></tr></tbody></table>"
 								skip_linebreak()
@@ -223,7 +272,10 @@ def parse(code):
 				stack.pop()
 				next()
 		if stack:
-			raise Exception("unclosed items: ",stack)
+			raise Exception("Reached end of file with unclosed items: " + ",".join(stack))
 		return output
 	
-	return parse()
+	try:
+		return parse()
+	except Exception as e:
+		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
