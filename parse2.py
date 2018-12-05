@@ -14,14 +14,15 @@ def escape_html_char(char):
 	if char=="\r":
 		return ""
 	return char
+#maybe remove \n if last element was a block or something...
 
 def parse(code):
 	i = -1
 	c = None
+	stack = []
 	
 	def next():
-		nonlocal i
-		nonlocal c
+		nonlocal i,c
 		i += 1
 		if i < len(code):
 			c = code[i]
@@ -29,22 +30,42 @@ def parse(code):
 			c = ""
 	
 	def skip_linebreak():
-		nonlocal i
-		nonlocal c
-		if c=="\n" or c=="\r":
+		nonlocal i,c
+		while c in (" ","\t"):
+			next()
+		if c in ("\n","\r"):
 			next()
 	
-	def skip_whitespace():
+	def skip_whitespace(): #really this should just skip spaces, then 1 line break, then more spaces
 		nonlocal c
-		while c in " \t\n\r":
+		while c in c in (" ","\t","\n","\r"):
 			next()
 	
 	def is_start_of_line():
+		nonlocal i
 		return i==0 or code[i-1]=="\n"
 	
+	def can_start_markup(type):
+		nonlocal i,c,code,stack
+		return (i-2 < 0 or code[i-2] in " \t\n\r({'\"") and (not(c) or not(c in " \t\n\r,'\"")) and not(type in stack)
+	
+	def can_end_markup(type):
+		nonlocal i,c,code,stack
+		return stack and stack[-1]==type and (i-2 < 0 or not(code[i-2] in " \t\n\r,'\"")) and (not(c) or c in " \t\n\r-.,:!?')}\"")
+	
+	def do_markup(type, tag, symbol):
+		if can_start_markup(type):
+			stack.append(type)
+			return "<"+tag+">"
+			#no next()
+		elif can_end_markup(type):
+			stack.pop()
+			return "</"+tag+">"
+		else:
+			return symbol
+	
 	def parse():
-		nonlocal i
-		nonlocal c
+		nonlocal i,c
 		output=""
 		next()
 		while c:
@@ -97,10 +118,9 @@ def parse(code):
 							raise Exception("Unclosed ` block")
 						next()
 					next()
-			## heading
-			elif c=="*" and is_start_of_line(): #this needs to be changed
-				next()
-				if c==" ":
+			## heading and bold
+			elif c=="*":
+				if is_start_of_line():
 					next()
 					heading_level = 1
 					while c=="*":
@@ -108,20 +128,41 @@ def parse(code):
 						next()
 					if heading_level > 6:
 						raise Exception("Heading too deep")
-					output += "<h%d>" % heading_level
-					while 1:
-						if not c or c=="\n":
-							break
-						output += escape_html_char(c)
+					if c==" ":
+						output += "<h%d>" % heading_level
 						next()
-					output += "</h%d>" % heading_level
-					next()
+						stack.append("heading%d" % heading_level)
+						continue
+					elif heading_level!=1:
+						raise Exception("Missing space after heading")
+						continue
 				else:
-					raise Exception("aaaa")
+					next()
+				output += do_markup("bold","b","*")
+			## italics
+			elif c=="/":
+				next()
+				output += do_markup("italic","i","/")
+			## underline
+			elif c=="_":
+				next()
+				output += do_markup("underline","u","_")
+			## line break
+			elif c=="\n":
+				if stack:
+					if stack[-1][0:-1]=="heading":
+						output += "</h%d>" % int(stack[-1][-1])
+						stack.pop()
+						next()
+						continue
+				output += escape_html_char(c)
+				next()
+			## comment
 			elif c=="#" and is_start_of_line():
 				next()
 				while c and c!="\n":
 					next()
+			## escape
 			elif c=="\\":
 				next()
 				if c:
@@ -133,57 +174,41 @@ def parse(code):
 				# |= table start
 				if c=="=":
 					next()
-					while c=="=":
-						next()
-					if c=="|":
-						next()
-					else:
-						raise Exception("missing | in table start")
+					while c=="=": next()
+					if c=="|": next()
+					else: raise Exception("missing | in table start")
 					skip_whitespace()
-					if c=="|":
-						next()
-					else:
-						raise Exception("missing | in table start")
+					if c=="|": next()
+					else: raise Exception("missing | in table start")
+					stack.append("table")
 					output += "<table><tbody><tr><td>"
 					skip_linebreak()
-				elif c=="-":
-					next()
-					while c=="-":
-						next()
-					if c=="|":
-						next()
-					else:
-						raise Exception("missing | in table header end")
-					skip_whitespace()
-					if c=="|":
-						next()
-					else:
-						raise Exception("missing | in table header end")
-					#todo: set header
 				# other
 				else:
-					skip_whitespace() # this is used for the linebreak after | as well as the linebreak between ||
-					# table end or next row
-					if c=="|":
-						next()
-						# ||= table end
-						if c=="=":
+					if stack and stack[-1] == "table":
+						skip_whitespace() # this is used for the linebreak after | as well as the linebreak between ||
+						# table end or next row
+						if c=="|":
 							next()
-							while c=="=":
+							# ||= table end
+							if c=="=":
 								next()
-							if c=="|":
-								next()
+								while c=="=": next()
+								if c=="|": next()
+								else: raise Exception("missing | in table end at %d" % i)
+								stack.pop()
+								output += "</td></tr></tbody></table>"
+								skip_linebreak()
+							# || next row
 							else:
-								raise Exception("missing | in table end at %d" % i)
-							output += "</td></tr></tbody></table>"
-							skip_linebreak()
-						# || next row
+								output += "</td></tr><tr><td>"
+								skip_linebreak()
+						# | next cell
 						else:
-							output += "</td></tr><tr><td>"
-							skip_linebreak()
-					# | next cell
+							output += "</td><td>"
 					else:
-						output += "</td><td>"
+						output += escape_html_char(c)
+						next()
 			## return
 			#elif c=="}":
 			#	next()
@@ -192,6 +217,13 @@ def parse(code):
 			else:
 				output += escape_html_char(c)
 				next()
+		if stack:
+			if stack[-1][0:-1]=="heading":
+				output += "</h%d>" % int(stack[-1][-1])
+				stack.pop()
+				next()
+		if stack:
+			raise Exception("unclosed items: ",stack)
 		return output
 	
 	return parse()
