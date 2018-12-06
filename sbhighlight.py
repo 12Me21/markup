@@ -240,7 +240,7 @@ def highlight_sb(code,callback):
 			push("operator")
 		# 
 		# other
-		# 
+		#
 		else:
 			next()
 			push()

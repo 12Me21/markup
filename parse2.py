@@ -1,9 +1,23 @@
+import sys
+import os
+
+def fp(path):
+	return os.path.join(os.path.dirname(__file__), path)
+
+filename = fp(sys.argv[1] if 1 in sys.argv else "in.m")
+
+def rel(path):
+	global filename
+	return os.path.join(os.path.dirname(filename), path)
+
 highlighters = {
-	"smilebasic": __import__("sbhighlight").html
-	"sbsyntax": __import__("sbsyntax").html
+	"smilebasic": __import__("sbhighlight").html,
+	#"sbsyntax": __import__("sbsyntax").html
 }
 
 def highlight(code, language):
+	if language in highlighters:
+		return highlighters[language](code)
 	return code
 
 def escape_html(code):
@@ -81,8 +95,10 @@ def parse(code):
 		nonlocal code
 		return code[0:pos].count("\n")+1
 	
+	filestack=[]
+	
 	def parse():
-		nonlocal i,c
+		nonlocal i,c,filestack,code
 		output=""
 		next()
 		while c:
@@ -93,7 +109,6 @@ def parse(code):
 					next()
 					# multiline code block
 					if c=="`":
-						output += "<code>"
 						language = ""
 						while 1:
 							next()
@@ -103,6 +118,8 @@ def parse(code):
 								language += c
 							else:
 								raise markup_exception("Reached end of input while reading code block language")
+						language = language.strip()
+						output += '<pre class="'+escape_html_attribute("highlight-"+language)+'">'
 						start = i+1
 						while 1:
 							next()
@@ -114,8 +131,8 @@ def parse(code):
 										break;
 							if not c:
 								raise markup_exception("Reached end of input while reading code inside code block")
-						output += highlight(code[start:i-2], language.strip())
-						output += "</code>"
+						output += highlight(code[start:i-2], language)
+						output += "</pre>"
 						next()
 						skip_linebreak()
 					# bad
@@ -137,6 +154,7 @@ def parse(code):
 					next()
 			## heading and bold
 			elif c=="*":
+				print(i,is_start_of_line())
 				if is_start_of_line():
 					next()
 					heading_level = 1
@@ -148,7 +166,7 @@ def parse(code):
 					if c==" ":
 						output += "<h%d>" % heading_level
 						next()
-						stack.append("Heading%d" % heading_level)
+						stack.append("heading%d" % heading_level)
 						continue
 					elif heading_level!=1:
 						raise markup_exception("Missing space after heading")
@@ -174,11 +192,47 @@ def parse(code):
 						continue
 				output += escape_html_char(c)
 				next()
+			## horizontal rule
+			elif c=="-" and is_start_of_line():
+				next()
+				dashes = 1
+				while c=="-":
+					dashes += 1
+					next()
+				if dashes >= 4:
+					output += "<hr>"
+				else:
+					output += "-"*dashes
 			## comment
 			elif c=="#" and is_start_of_line():
 				next()
-				while c and c!="\n":
+				if c=="+":
 					next()
+					start=i
+					while c and c!=" " and c!="\n":
+						next()
+					command = code[start:i]
+					args = ""
+					if c==" ":
+						next()
+						start = i
+						while c and c!="\n":
+							next()
+						args=code[start:i]
+					if command == "INCLUDE":
+						old_code = code
+						old_i = i
+						code = open(rel(args)).read()
+						i = -1
+						output += parse()
+						code = old_code
+						i = old_i-1
+						next()
+					else:
+						raise markup_exception("Unrecognized command: "+command)
+				else:
+					while c and c!="\n":
+						next()
 			## escape
 			elif c=="\\":
 				next()
@@ -258,11 +312,6 @@ def parse(code):
 					else:
 						output += escape_html_char(c)
 						next()
-			## return
-			#elif c=="}":
-			#	next()
-			#	return output
-			## other symbol
 			else:
 				output += escape_html_char(c)
 				next()
@@ -279,3 +328,9 @@ def parse(code):
 		return parse()
 	except Exception as e:
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
+
+file = open(filename)
+output_file = open(fp(sys.argv[2] if 2 in sys.argv else "out.htm"),"w")
+output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(file.read())) #parse should just take the stream as input
+file.close()
+output_file.close()
