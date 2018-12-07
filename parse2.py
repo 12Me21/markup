@@ -1,5 +1,6 @@
 import sys
 import os
+import category as Category
 
 def fp(path):
 	return os.path.join(os.path.dirname(__file__), path)
@@ -10,9 +11,16 @@ def rel(path):
 	global filename
 	return os.path.join(os.path.dirname(filename), path)
 
+sbhl = __import__("sbhighlight")
+
+def sbsyntax(code):
+	list = sbhl.make_list(code)
+	return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
+<div class="syntax-full">'''+sbhl.html("\n".join(list))+'''</div>'''
+
 highlighters = {
-	"smilebasic": __import__("sbhighlight").html,
-	#"sbsyntax": __import__("sbsyntax").html
+	"smilebasic": sbhl.html,
+	"sbsyntax": sbsyntax
 }
 
 def highlight(code, language):
@@ -30,14 +38,22 @@ def escape_html_char(char):
 		return "&amp;"
 	if char=="\n":
 		return "<br>"
-	if char=="\r":
-		return ""
 	return char
 #maybe remove \n if last element was a block or something...
 
 #warning: only works in quoted attributes
 def escape_html_attribute(code):
 	return code.replace("&","&amp;").replace('"',"&quot;")
+
+def generate_navigation(page):
+	categories = Category.tree.categories(page)
+	lines = []
+	for category in categories:
+		neighbors = category.neighbors(page)
+		lines.append("[[{category}.html][Up ({category})]] | [[{previous}.html][< Previous ({previous})]] | [[{next}.html][Next ({next}) >]]".format(
+			category=category, previous=neighbors[0], next=neighbors[1]
+		))
+	return "\n".join(lines)
 
 def parse(code):
 	i = -1
@@ -49,6 +65,8 @@ def parse(code):
 		i += 1
 		if i < len(code):
 			c = code[i]
+			if c=="\r":
+				next()
 		else:
 			c = ""
 	
@@ -56,12 +74,12 @@ def parse(code):
 		nonlocal i,c
 		while c in (" ","\t"):
 			next()
-		if c in ("\n","\r"):
+		if c == "\n":
 			next()
 	
 	def skip_whitespace(): #really this should just skip spaces, then 1 line break, then more spaces
 		nonlocal c
-		while c in c in (" ","\t","\n","\r"):
+		while c in c in (" ","\t","\n"):
 			next()
 	
 	def is_start_of_line():
@@ -70,11 +88,11 @@ def parse(code):
 	
 	def can_start_markup(type):
 		nonlocal i,c,code,stack
-		return (i-2 < 0 or code[i-2] in " \t\n\r({'\"") and (not(c) or not(c in " \t\n\r,'\"")) and not(type in stack)
+		return (i-2 < 0 or code[i-2] in " \t\n({'\"") and (not(c) or not(c in " \t\n,'\"")) and not(type in stack)
 	
 	def can_end_markup(type):
 		nonlocal i,c,code,stack
-		return stack and stack[-1]==type and (i-2 < 0 or not(code[i-2] in " \t\n\r,'\"")) and (not(c) or c in " \t\n\r-.,:!?')}\"")
+		return stack and stack[-1]==type and (i-2 < 0 or not(code[i-2] in " \t\n,'\"")) and (not(c) or c in " \t\n-.,:!?')}\"")
 	
 	def do_markup(type, tag, symbol):
 		if can_start_markup(type):
@@ -95,7 +113,74 @@ def parse(code):
 		nonlocal code
 		return code[0:pos].count("\n")+1
 	
+	def sub_parse(new_code):
+		nonlocal code,i,c
+		old_code = code
+		old_i = i
+		code = new_code
+		i = -1
+		output = parse()
+		code = old_code
+		i = old_i-1
+		next()
+		return output
+	
+	class ParseError(Exception):
+		nonlocal i
+		def __init__(self, message):
+			self.args = [message, i]
+		def __str__(self):
+			return "%s\nOn line %d" % (self.args[0], get_line(self.args[1]))
+	
 	filestack=[]
+	
+	def line_end():
+		nonlocal stack,c,i
+		output = ""
+		if stack:
+			if stack[-1][0:7]=="heading":
+				output += "</h%d>" % int(stack[-1][-1])
+				stack.pop()
+				next()
+				return output
+			elif stack[-1][0:4]=="list":
+				depth = int(stack[-1][4:])
+				next()
+				spaces = 0
+				while c==" " or c=="\t":
+					spaces += 1
+					next()
+				if c=="+":
+					next()
+					if c==" ":
+						next()
+						if spaces>depth: #increasing list depth
+							for j in range(depth+1, spaces+1):
+								stack.append("list%d" % j)
+							output += "<ul><li>"*(spaces-depth)
+						elif spaces<depth: #decreasing list depth
+							for j in range(spaces, depth):
+								if stack[-1][0:4]=="list":
+									stack.pop()
+								else:
+									raise ParseError("item must be closed before list changes")
+							output += "</li></ul>"*(depth-spaces)+"</li><li>"
+						else:
+							output += "</li><li>"
+					else:
+						output += "<br>+"
+				else:
+					print("ending list",depth)
+					for j in range(depth+1):
+						if stack[-1][0:4]=="list":
+							stack.pop()
+						else:
+							raise ParseError("item must be closed before list changes")
+					output += "</li></ul>"*(depth+1)
+				return output
+		output += escape_html_char(c)
+		next()
+		return output
 	
 	def parse():
 		nonlocal i,c,filestack,code
@@ -117,7 +202,7 @@ def parse(code):
 							elif c:
 								language += c
 							else:
-								raise markup_exception("Reached end of input while reading code block language")
+								raise ParseError("Reached end of input while reading code block language")
 						language = language.strip()
 						output += '<pre class="'+escape_html_attribute("highlight-"+language)+'">'
 						start = i+1
@@ -130,7 +215,7 @@ def parse(code):
 									if c=="`":
 										break;
 							if not c:
-								raise markup_exception("Reached end of input while reading code inside code block")
+								raise ParseError("Reached end of input while reading code inside code block")
 						output += highlight(code[start:i-2], language)
 						output += "</pre>"
 						next()
@@ -149,12 +234,11 @@ def parse(code):
 						elif c:
 							output += escape_html_char(c)
 						else:
-							raise markup_exception("Unclosed ` block")
+							raise ParseError("Unclosed ` block")
 						next()
 					next()
 			## heading and bold
 			elif c=="*":
-				print(i,is_start_of_line())
 				if is_start_of_line():
 					next()
 					heading_level = 1
@@ -162,14 +246,14 @@ def parse(code):
 						heading_level += 1
 						next()
 					if heading_level > 6:
-						raise markup_exception("Heading too deep")
+						raise ParseError("Heading too deep")
 					if c==" ":
 						output += "<h%d>" % heading_level
 						next()
 						stack.append("heading%d" % heading_level)
 						continue
 					elif heading_level!=1:
-						raise markup_exception("Missing space after heading")
+						raise ParseError("Missing space after heading")
 						continue
 				else:
 					next()
@@ -182,16 +266,13 @@ def parse(code):
 			elif c=="_":
 				next()
 				output += do_markup("underline","u","_")
+			## superscript
+			elif c=="^":
+				next()
+				output += do_markup("superscript","sup","^")
 			## line break
 			elif c=="\n":
-				if stack:
-					if stack[-1][0:-1]=="heading":
-						output += "</h%d>" % int(stack[-1][-1])
-						stack.pop()
-						next()
-						continue
-				output += escape_html_char(c)
-				next()
+				output += line_end()
 			## horizontal rule
 			elif c=="-" and is_start_of_line():
 				next()
@@ -203,6 +284,14 @@ def parse(code):
 					output += "<hr>"
 				else:
 					output += "-"*dashes
+			## list
+			elif c=="+" and is_start_of_line():
+				next()
+				if c==" ":
+					stack.append("list0")
+					output += "<ul><li>"
+				else:
+					output += "+"
 			## comment
 			elif c=="#" and is_start_of_line():
 				next()
@@ -220,16 +309,15 @@ def parse(code):
 							next()
 						args=code[start:i]
 					if command == "INCLUDE":
-						old_code = code
-						old_i = i
-						code = open(rel(args)).read()
-						i = -1
-						output += parse()
-						code = old_code
-						i = old_i-1
-						next()
+						output += sub_parse(open(rel(args)).read())
+					elif command == "NAVIGATION":
+						output += sub_parse(generate_navigation("MIN"))
+					elif command == "TITLE":
+						output += sub_parse("* MIN")
+						output += "<title>MIN</title>"
 					else:
-						raise markup_exception("Unrecognized command: "+command)
+						raise ParseError("Unrecognized command: "+command)
+					next()
 				else:
 					while c and c!="\n":
 						next()
@@ -252,7 +340,7 @@ def parse(code):
 							if c=="[" or c=="]":
 								break
 						elif not c:
-							raise markup_exception("Unclosed link")
+							raise ParseError("Unclosed link")
 					output += '<a href="' + escape_html_attribute(code[start:i-1]) + '">'
 					if c=="]":
 						output += escape_html(code[start:i-1]) + "</a>"
@@ -271,6 +359,13 @@ def parse(code):
 					output += "</a>"
 				else:
 					output+="]"
+			elif c=="{":
+				print("A")
+				next()
+				stack.append("group")
+			elif c=="}" and stack and stack[-1]=="group":
+				next()
+				stack.pop()
 			## tables
 			elif c=="|":
 				next()
@@ -279,10 +374,10 @@ def parse(code):
 					next()
 					while c=="=": next()
 					if c=="|": next()
-					else: raise markup_exception("Missing | in table start")
+					else: raise ParseError("Missing | in table start")
 					skip_whitespace()
 					if c=="|": next()
-					else: raise markup_exception("Missing | in table start")
+					else: raise ParseError("Missing | in table start")
 					stack.append("table")
 					output += "<table><tbody><tr><td>"
 					skip_linebreak()
@@ -298,7 +393,7 @@ def parse(code):
 								next()
 								while c=="=": next()
 								if c=="|": next()
-								else: raise markup_exception("Missing | in table end")
+								else: raise ParseError("Missing | in table end")
 								stack.pop()
 								output += "</td></tr></tbody></table>"
 								skip_linebreak()
@@ -310,27 +405,23 @@ def parse(code):
 						else:
 							output += "</td><td>"
 					else:
-						output += escape_html_char(c)
-						next()
+						output += "|"
 			else:
 				output += escape_html_char(c)
 				next()
+		output += line_end()
 		if stack:
-			if stack[-1][0:-1]=="heading":
-				output += "</h%d>" % int(stack[-1][-1])
-				stack.pop()
-				next()
-		if stack:
-			raise Exception("Reached end of file with unclosed items: " + ",".join(stack))
+			raise ParseError("Reached end of file with unclosed items: " + ",".join(stack))
 		return output
 	
 	try:
 		return parse()
-	except Exception as e:
+	except ParseError as e:
+		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
 file = open(filename)
-output_file = open(fp(sys.argv[2] if 2 in sys.argv else "out.htm"),"w")
+output_file = open(fp(sys.argv[2] if 2 in sys.argv else "out.html"),"w")
 output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(file.read())) #parse should just take the stream as input
 file.close()
 output_file.close()

@@ -252,22 +252,82 @@ def escape_html(text):
 def html(code):
 	html = ""
 	prev_type = None
+	prev_link = False
 	# this is called for each highlightable token
 	def callback(word, type=None):
-		nonlocal html, prev_type
+		nonlocal html, prev_type, prev_link
 		# only make a new span if the CSS class has changed
 		if type != prev_type:
 			# close previous span
 			if prev_type:
-				html += "</span>"
+				if prev_link:
+					html += "</a>"
+				else:
+					html += "</span>"
 			# open new span
 			if type:
-				html += '<span class="'+type+'">'
+				if "keyword" in type or type in {"function", "operator"}:
+					html += '<a href="'+word+'.html" class="'+type+'">'
+					prev_link = True
+				else:
+					html += '<span class="'+type+'">'
+					prev_link = False
 		html += escape_html(word)
 		prev_type = type
 	
 	highlight_sb(code, callback)
 	# close last span
 	if prev_type:
-		html += "</span>"
+		if prev_link:
+			html += "</a>"
+		else:
+			html += "</span>"
 	return html
+
+def make_list(code):
+	list = []
+	
+	def parse_args(code, string, i):
+		c=""
+		list = []
+		def next():
+			nonlocal i,c,code
+			i += 1
+			c = code[i] if i<len(code) else ""
+		
+		i -= 1
+		next()
+		
+		while 1:
+			if c == '[':
+				next()
+				if c == ']':
+					string += '['
+					string += c
+					next()
+					continue
+				list = parse_args(code, string, i) + list
+				level = 1
+				while 1:
+					if c=='[':
+						level += 1
+					elif c==']':
+						level -= 1
+						if level == 0:
+							break
+					elif c=='' or c=='O' or c=='\n':
+						string += "(Error, missing ']')"
+						break
+					next()
+			if c=='' or c=='\n':
+				break
+			elif c != ']':
+				string += c
+			next()
+		list = [string.replace("  "," ").replace("  "," ").replace(" , ",", ")] + list
+		return list
+	
+	for line in code.split("\n"):
+		list = list + parse_args(line,"",0)
+	
+	return list

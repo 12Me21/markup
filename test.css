@@ -106,6 +106,36 @@ hr {
 }
 
 
+sup {
+	top: -.5em;
+	font-size: 75%;
+	line-height: 0;
+	position: relative;
+	vertical-align: initial;
+}
+
+input#syntax {
+  display: none;
+  height: 0;
+}
+.syntax-full {
+  display: none;
+  height: 0;
+}
+
+label[for="syntax"] {
+	border: 1px solid black;
+}
+
+input#syntax:checked ~.syntax-short {
+  display: none;
+  height: 0;
+}
+input#syntax:checked ~.syntax-full {
+  display: initial;
+  height: unset;
+}
+
 /* example theme */
 
 pre.highlight-smilebasic {
@@ -119,22 +149,30 @@ pre.highlight-smilebasic > span {
 /* WORDS */
 
 /* keywords (put this first) */
-pre.highlight-smilebasic > span.keyword  {color:rgb( 55,163,237);}
+pre.highlight-smilebasic .keyword  {color:rgb( 55,163,237);}
 /* variables */
-pre.highlight-smilebasic > span.variable {color:rgb(255,255,255);}
+pre.highlight-smilebasic .variable {color:rgb(255,255,255);}
 /* built in functions */
-pre.highlight-smilebasic > span.function {color:rgb(200,122,237);} 
+pre.highlight-smilebasic .function {color:rgb(200,122,237);} 
 /* labels */
-pre.highlight-smilebasic > span.label    {color:rgb(128,255,  0);}
+pre.highlight-smilebasic .label    {color:rgb(128,255,  0);}
 /* strings */
-pre.highlight-smilebasic > span.string   {color:rgb(  0,255, 64);}
+pre.highlight-smilebasic .string   {color:rgb(  0,255, 64);}
 /* comments */
-pre.highlight-smilebasic > span.comment  {color:rgb(102,102,102);}
+pre.highlight-smilebasic .comment  {color:rgb(102,102,102);}
 
 /* operators and named operators (speical) */
-pre.highlight-smilebasic > span.operator , pre.highlight-smilebasic > span.word-operator {color:rgb(229,193, 56);}
+pre.highlight-smilebasic .operator , pre.highlight-smilebasic .word-operator {color:rgb(229,193, 56);}
 /* numbers and true/false (special) */
-pre.highlight-smilebasic > span.number , pre.highlight-smilebasic > span.true-false      {color:rgb(255, 58,131);}
+pre.highlight-smilebasic .number , pre.highlight-smilebasic .true-false      {color:rgb(255, 58,131);}
+
+pre.highlight-sbsyntax  .keyword, pre.highlight-sbsyntax .function {
+	font-weight: bold;
+}
+
+pre.highlight-sbsyntax  .variable {
+	font-style: italic;
+}
 
 /* new */
 pre.highlight-smilebasic > .def + .variable {animation: color-change 1s infinite;}
@@ -142,4 +180,8 @@ pre.highlight-smilebasic > .def + .variable {animation: color-change 1s infinite
     0% { color: red; }
     50% { color: blue; }
     100% { color: red; }
+}
+
+pre a {
+	text-decoration:none;
 }
