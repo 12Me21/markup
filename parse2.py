@@ -462,15 +462,15 @@ def parse_file(input_dir, output_dir, name):
 		output_file = open(os.path.join(output_dir, name+".html"),"w+")
 		file = open(filename)
 		text = file.read()
-		print("converting page",name)
+		print("%-10s: converting page" % name)
 	else:
 		
 		if Category.tree.find_category(name):
-			print("generating page",name)
+			print("%-10s: generating placeholder category page" % name)
 			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
 		else:
-			text = "#+NAVIGATION\n#+TITLE"
-			print("warning: missing page",name)
+			text = "#+NAVIGATION\n#+TITLE\nPage missing"
+			print("%-10s: missing! (generating placeholder)" % name)
 			#return
 	
 	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
