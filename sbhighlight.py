@@ -328,6 +328,7 @@ def make_list(code):
 		return list
 	
 	for line in code.split("\n"):
-		list = list + parse_args(line,"",0)
+		if line:
+			list = list + parse_args(line,"",0)
 	
 	return list

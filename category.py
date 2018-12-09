@@ -106,7 +106,7 @@ tree = WikiCategory("Root",[
 		WikiCategory("Operators",["INC","DEC","DIV","MOD"]),
 		WikiCategory("Rounding",["FLOOR","ROUND","CEIL"]),
 		WikiCategory("Trigonometry",["PI","RAD","DEG","SIN","COS","TAN","ASIN","ACOS","ATAN","SINH","COSH","TANH"]),
-		WikiCategory("RNG",["RND","RNDF","RANDOMIZE"])
+		WikiCategory("Random",["RND","RNDF","RANDOMIZE"])
 	]),
 	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","LEN","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
 	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP"]+array_string)

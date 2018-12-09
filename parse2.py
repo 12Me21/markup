@@ -17,9 +17,25 @@ import category as Category
 sbhl = __import__("sbhighlight")
 
 def sbsyntax(code):
+	
 	list = sbhl.make_list(code)
-	return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
+	print(len(list),list)
+	if len(list)>1:
+		return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
 <div class="syntax-full">'''+sbhl.html("\n".join(list))+'''</div>'''
+	else:
+		return sbhl.html(code)
+
+exists = {}
+
+def page_link(page):
+	if Category.tree.find_category(page):
+		return '<a href="%s.html" class="category">' % escape_html_attribute(page)
+	else:
+		if exists[page]:
+			return '<a href="%s.html">' % escape_html_attribute(page)
+		else:
+			return '<a href="%s.html" class="missing">' % escape_html_attribute(page)
 
 def sbconsole(code):
 	return code
@@ -57,12 +73,12 @@ def generate_navigation(page):
 	lines = []
 	for category in categories:
 		neighbors = category.neighbors(page)
-		lines.append('<a href="%s">Up (%s)</a> | <a href="%s">&lt; Previous(%s)</a> | <a href="%s">Next (%s) ></a>' % (
-			escape_html_attribute(category.name+".html"),
+		lines.append('<ul class="navigation"><li class="up">%s%s</a></li><li class="previous">%s%s</a></li><li class="next">%s%s</a></li></ul>' % (
+			page_link(category.name),
 			escape_html(Category.title[category.name]),
-			escape_html_attribute(neighbors[0]+".html"),
+			page_link(neighbors[0]),
 			escape_html(Category.title[neighbors[0]]),
-			escape_html_attribute(neighbors[1]+".html"),
+			page_link(neighbors[1]),
 			escape_html(Category.title[neighbors[1]])
 		))
 	return "<br>".join(lines)
@@ -336,7 +352,7 @@ def parse(code, filename):
 						output += "<ul>"
 						for page in category.pages:
 							name = str(page)
-							output += '<li><a href="%s">%s</a></li>' % (name+".html", Category.title[name])
+							output += "<li>"+page_link(name)+Category.title[name]+"</a></li>"
 						output += "</ul>"
 					else:
 						raise ParseError("Unrecognized command: "+command)
@@ -369,11 +385,9 @@ def parse(code, filename):
 					if c=="]":
 						# check if url is a page filename
 						if url in Category.title:
-							name = Category.title[url]
-							url += ".html"
+							output += page_link(url) + escape_html(Category.title[url]) + "</a>"
 						else:
-							name = url
-						output += '<a href="%s">%s</a>' % (escape_html_attribute(url), escape_html(name))
+							output += '<a href="%s">%s</a>' % (escape_html_attribute(url), escape_html(url))
 						next()
 					# [[url][text]]
 					else: #c=="["
@@ -451,8 +465,6 @@ def parse(code, filename):
 		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
-exists = {}
-
 def parse_file(input_dir, output_dir, name):
 	filename = os.path.join(input_dir, name+".m")
 	output_file = open(os.path.join(output_dir, name+".html"),"w+")
@@ -488,8 +500,8 @@ args = [
 if len(args)>=2:
 	assert os.path.isdir(args[0])
 	assert os.path.isdir(args[1])
-	# for page in Category.title:
-		# exists[page] = os.path.isfile(page) (use for red links)
+	for page in Category.title:
+		exists[page] = os.path.isfile(os.path.join(args[0], page+".m")) #(use for red links)
 	if len(args)==2:
 		for page in Category.title:
 			parse_file(args[0], args[1], page)
