@@ -329,6 +329,15 @@ def parse(code, filename):
 					elif command == "TITLE":
 						title_html = escape_html(Category.title[filename])
 						output += "<h1>"+title_html+"</h1><title>"+title_html+"</title>"
+					elif command == "PAGES":
+						category = Category.tree.find_category(filename)
+						if not category:
+							raise ParseError("tried to insert page list on page that isn't a category")
+						output += "<ul>"
+						for page in category.pages:
+							name = str(page)
+							output += '<li><a href="%s">%s</a></li>' % (name+".html", Category.title[name])
+						output += "</ul>"
 					else:
 						raise ParseError("Unrecognized command: "+command)
 					next()
@@ -442,19 +451,31 @@ def parse(code, filename):
 		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
-
+exists = {}
 
 def parse_file(input_dir, output_dir, name):
 	filename = os.path.join(input_dir, name+".m")
-	if not os.path.isfile(filename):
-		print("warning: missing page",name)
-		return
-	else:
-		print("converting page",name)
-	file = open(filename)
 	output_file = open(os.path.join(output_dir, name+".html"),"w+")
-	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(file.read(), name))
-	file.close()
+	
+	file = None
+	if os.path.isfile(filename):
+		output_file = open(os.path.join(output_dir, name+".html"),"w+")
+		file = open(filename)
+		text = file.read()
+		print("converting page",name)
+	else:
+		
+		if Category.tree.find_category(name):
+			print("generating page",name)
+			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
+		else:
+			text = "#+NAVIGATION\n#+TITLE"
+			print("warning: missing page",name)
+			#return
+	
+	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
+	if file:
+		file.close()
 	output_file.close()
 
 #args = sys.argv
@@ -467,6 +488,8 @@ args = [
 if len(args)>=2:
 	assert os.path.isdir(args[0])
 	assert os.path.isdir(args[1])
+	# for page in Category.title:
+		# exists[page] = os.path.isfile(page) (use for red links)
 	if len(args)==2:
 		for page in Category.title:
 			parse_file(args[0], args[1], page)

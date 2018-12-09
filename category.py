@@ -58,14 +58,15 @@ class WikiCategory():
 	def categories(self, page):
 		output = OrderedSet() #this should be an ordered set
 		for item in self.pages:
+			if str(item)==page:
+				output.add(self)
 			if isinstance(item, WikiCategory):
 				output.update(item.categories(page))
-			elif item==page:
-				output.add(self)
 		return output
 	# get a full list of all pages (files)
 	def all_pages(self):
 		output = set()
+		output.add(self.name)
 		for item in self.pages:
 			if isinstance(item, WikiCategory):
 				output.add(item.name)
@@ -86,6 +87,17 @@ class WikiCategory():
 				break
 		if index != None:
 			return (str(self.pages[(index-1) % len(self.pages)]), str(self.pages[(index+1) % len(self.pages)]))
+	def find_category(self, name):
+		if self.name == name:
+			return self
+		for item in self.pages:
+			if isinstance(item, WikiCategory):
+				if item.name == name:
+					return item
+				x = item.find_category(name)
+				if x:
+					return x
+		return None
 
 array_string = ["COPY","PUSH","POP","SHIFT","UNSHIFT"]
 
