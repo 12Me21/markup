@@ -1,15 +1,18 @@
+#planned:
+#args:
+#input directory
+#output directory
+#list of filenames (if empty, all files in the input directory (with the correct extension) are updated
+
+#input dir also contains the category tree and page title override list
+
 import sys
 import os
 import category as Category
 
-def fp(path):
-	return os.path.join(os.path.dirname(__file__), path)
-
-filename = fp(sys.argv[1] if 1 in sys.argv else "in.m")
-
-def rel(path):
-	global filename
-	return os.path.join(os.path.dirname(filename), path)
+# def rel(path):
+	# global filename
+	# return os.path.join(os.path.dirname(filename), path)
 
 sbhl = __import__("sbhighlight")
 
@@ -18,9 +21,13 @@ def sbsyntax(code):
 	return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
 <div class="syntax-full">'''+sbhl.html("\n".join(list))+'''</div>'''
 
+def sbconsole(code):
+	return code
+
 highlighters = {
 	"smilebasic": sbhl.html,
-	"sbsyntax": sbsyntax
+	"sbsyntax": sbsyntax,
+	"sbconsole": sbconsole
 }
 
 def highlight(code, language):
@@ -50,12 +57,17 @@ def generate_navigation(page):
 	lines = []
 	for category in categories:
 		neighbors = category.neighbors(page)
-		lines.append("[[{category}.html][Up ({category})]] | [[{previous}.html][< Previous ({previous})]] | [[{next}.html][Next ({next}) >]]".format(
-			category=category, previous=neighbors[0], next=neighbors[1]
+		lines.append('<a href="%s">Up (%s)</a> | <a href="%s">&lt; Previous(%s)</a> | <a href="%s">Next (%s) ></a>' % (
+			escape_html_attribute(category.name+".html"),
+			escape_html(Category.title[category.name]),
+			escape_html_attribute(neighbors[0]+".html"),
+			escape_html(Category.title[neighbors[0]]),
+			escape_html_attribute(neighbors[1]+".html"),
+			escape_html(Category.title[neighbors[1]])
 		))
-	return "\n".join(lines)
+	return "<br>".join(lines)
 
-def parse(code):
+def parse(code, filename):
 	i = -1
 	c = None
 	stack = []
@@ -84,6 +96,7 @@ def parse(code):
 	
 	def is_start_of_line():
 		nonlocal i
+		#print("SOL check",i)
 		return i==0 or code[i-1]=="\n"
 	
 	def can_start_markup(type):
@@ -132,14 +145,14 @@ def parse(code):
 		def __str__(self):
 			return "%s\nOn line %d" % (self.args[0], get_line(self.args[1]))
 	
-	filestack=[]
+	# make a separate stack for storing the list indentation amount
 	
 	def line_end():
 		nonlocal stack,c,i
 		output = ""
 		if stack:
 			if stack[-1][0:7]=="heading":
-				output += "</h%d>" % int(stack[-1][-1])
+				output += "</h%d>" % int(stack[-1][7:])
 				stack.pop()
 				next()
 				return output
@@ -170,7 +183,7 @@ def parse(code):
 					else:
 						output += "<br>+"
 				else:
-					print("ending list",depth)
+					#print("ending list",depth)
 					for j in range(depth+1):
 						if stack[-1][0:4]=="list":
 							stack.pop()
@@ -183,7 +196,7 @@ def parse(code):
 		return output
 	
 	def parse():
-		nonlocal i,c,filestack,code
+		nonlocal i,c,code
 		output=""
 		next()
 		while c:
@@ -267,9 +280,9 @@ def parse(code):
 				next()
 				output += do_markup("underline","u","_")
 			## superscript
-			elif c=="^":
-				next()
-				output += do_markup("superscript","sup","^")
+			# elif c=="^":
+				# next()
+				# output += do_markup("superscript","sup","^")
 			## line break
 			elif c=="\n":
 				output += line_end()
@@ -309,12 +322,13 @@ def parse(code):
 							next()
 						args=code[start:i]
 					if command == "INCLUDE":
-						output += sub_parse(open(rel(args)).read())
+						pass
+						# output += sub_parse(open(rel(args)).read())
 					elif command == "NAVIGATION":
-						output += sub_parse(generate_navigation("MIN"))
+						output += generate_navigation(filename)
 					elif command == "TITLE":
-						output += sub_parse("* MIN")
-						output += "<title>MIN</title>"
+						title_html = escape_html(Category.title[filename])
+						output += "<h1>"+title_html+"</h1><title>"+title_html+"</title>"
 					else:
 						raise ParseError("Unrecognized command: "+command)
 					next()
@@ -328,7 +342,7 @@ def parse(code):
 					output += escape_html_char(c)
 					next()
 			## link
-			elif c=="[":
+			elif c=="[" and not "link" in stack:
 				next()
 				if c=="[":
 					next()
@@ -341,11 +355,20 @@ def parse(code):
 								break
 						elif not c:
 							raise ParseError("Unclosed link")
-					output += '<a href="' + escape_html_attribute(code[start:i-1]) + '">'
+					url = code[start:i-1]
+					# [[url]]
 					if c=="]":
-						output += escape_html(code[start:i-1]) + "</a>"
+						# check if url is a page filename
+						if url in Category.title:
+							name = Category.title[url]
+							url += ".html"
+						else:
+							name = url
+						output += '<a href="%s">%s</a>' % (escape_html_attribute(url), escape_html(name))
 						next()
-					else:
+					# [[url][text]]
+					else: #c=="["
+						output += '<a href="' + escape_html_attribute(url) + '">'
 						next()
 						stack.append("link")
 				else:
@@ -360,7 +383,6 @@ def parse(code):
 				else:
 					output+="]"
 			elif c=="{":
-				print("A")
 				next()
 				stack.append("group")
 			elif c=="}" and stack and stack[-1]=="group":
@@ -420,8 +442,37 @@ def parse(code):
 		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
-file = open(filename)
-output_file = open(fp(sys.argv[2] if 2 in sys.argv else "out.html"),"w")
-output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(file.read())) #parse should just take the stream as input
-file.close()
-output_file.close()
+
+
+def parse_file(input_dir, output_dir, name):
+	filename = os.path.join(input_dir, name+".m")
+	if not os.path.isfile(filename):
+		print("warning: missing page",name)
+		return
+	else:
+		print("converting page",name)
+	file = open(filename)
+	output_file = open(os.path.join(output_dir, name+".html"),"w+")
+	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(file.read(), name))
+	file.close()
+	output_file.close()
+
+#args = sys.argv
+args = [
+	os.path.join(os.path.dirname(__file__), "input"),
+	os.path.join(os.path.dirname(__file__), "output"),
+	#"MAX"
+]
+
+if len(args)>=2:
+	assert os.path.isdir(args[0])
+	assert os.path.isdir(args[1])
+	if len(args)==2:
+		for page in Category.title:
+			parse_file(args[0], args[1], page)
+	else:
+		for page in args[2:]:
+			assert Category.title[page]
+			parse_file(args[0], args[1], page)
+else:
+	raise Exception("Wrong number of arguments")

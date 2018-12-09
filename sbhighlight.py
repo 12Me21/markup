@@ -70,7 +70,7 @@ def highlight_sb(code,callback):
 				# read digits after
 				if c.isdigit():
 					next()
-					while c.isDigit():
+					while c.isdigit():
 						next()
 				else:
 					# if GOTO is available: GOTO @skip_e

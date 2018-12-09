@@ -99,3 +99,8 @@ tree = WikiCategory("Root",[
 	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","LEN","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
 	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP"]+array_string)
 ])
+
+title = {page:page for page in tree.all_pages()}
+
+# for any pages where the title is different from the filename, this is used:
+# titles do not NEED to be unique, but it's best if they are, to avoid confusion
