@@ -5,15 +5,15 @@ Returns the sign of a number (-1, 0, or 1).
 ``` sbsyntax
 SGN number# OUT sign%
 ```
-|=|
+|=========================|
 | parameter | description |
 | number#   | The number to get the sign of |
-|=|
-|=|
+|=========================|
+|======================|
 | output | description |
 | sign%  | The sign of number# (-1, 0, or 1) |
-|=|
-|=|
+|======================|
+|==================|
 | numbers   | sign |
 | positive  | 1    |
 | negative  | -1   |
@@ -22,7 +22,7 @@ SGN number# OUT sign%
 | infinity  | 1    |
 | -infinity | -1   |
 | NaN       | 1    |
-|=|
+|==================|
 ** Examples
 ``` smilebasic
 PRINT SGN(10) '1

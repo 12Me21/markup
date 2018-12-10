@@ -3,8 +3,8 @@
 Finds the largest number in a list of numbers or an array
 ** Syntax
 ``` sbsyntax
-MAX number_1, number_2 [, ...] OUT maximum
-MAX array[] OUT maximum
+COPY dest_array[] [ , dest_start% ] , source_array[] [ [ , source_start% ] , source_length% ]
+COPY dest_array[] [ , dest_start% ] , source_label$ [ , source_length% ]
 ```
 |=|
 |Parameter|Description|
