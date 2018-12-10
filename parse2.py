@@ -17,9 +17,8 @@ import category as Category
 sbhl = __import__("sbhighlight")
 
 def sbsyntax(code):
-	
 	list = sbhl.make_list(code)
-	print(len(list),list)
+	#print(len(list),list)
 	if len(list)>1:
 		return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
 <div class="syntax-full">'''+sbhl.html("\n".join(list))+'''</div>'''
@@ -81,7 +80,7 @@ def generate_navigation(page):
 			page_link(neighbors[1]),
 			escape_html(Category.title[neighbors[1]])
 		))
-	return "<br>".join(lines)
+	return "".join(lines)
 
 def parse(code, filename):
 	i = -1
@@ -481,9 +480,9 @@ def parse_file(input_dir, output_dir, name):
 			print("%-10s: generating placeholder category page" % name)
 			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
 		else:
-			text = "#+NAVIGATION\n#+TITLE\nPage missing"
-			print("%-10s: missing! (generating placeholder)" % name)
-			#return
+			#text = "#+NAVIGATION\n#+TITLE\nPage missing"
+			print("%-10s: missing!" % name)
+			return
 	
 	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
 	if file:

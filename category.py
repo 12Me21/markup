@@ -99,18 +99,93 @@ class WikiCategory():
 					return x
 		return None
 
-array_string = ["COPY","PUSH","POP","SHIFT","UNSHIFT"]
+array_string = ["COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]
 
 tree = WikiCategory("Root",[
-	WikiCategory("Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY",
+	WikiCategory("Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY","Constants",
 		WikiCategory("Operators",["INC","DEC","DIV","MOD"]),
 		WikiCategory("Rounding",["FLOOR","ROUND","CEIL"]),
 		WikiCategory("Trigonometry",["PI","RAD","DEG","SIN","COS","TAN","ASIN","ACOS","ATAN","SINH","COSH","TANH"]),
-		WikiCategory("Random",["RND","RNDF","RANDOMIZE"])
+		WikiCategory("Random",["RND","RNDF","RANDOMIZE"]),
 	]),
-	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","LEN","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
-	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP"]+array_string)
+	WikiCategory("Audio",[
+		WikiCategory("Music",["BGMSET","BGMSETD","BGMPLAY","BGMSTOP","BGMPAUSE","BGMCONT","BGMVOL","BGMCHK","BGMVAR","BGMCLEAR","CHKMML"]),
+		WikiCategory("Microphone",["MICDATA","MICPOS","MICSAVE","MICSIZE","MICSTART","MICSTOP"]),
+		WikiCategory("Speech",["TALK","TALKCHK","TALKSTOP"]),
+		WikiCategory("PCM",["PCMCONT","PCMPOS","PCMSTOP","PCMSTREAM","PCMVOL"]),
+		WikiCategory("Instruments",["WAVSET","WAVSETA"]),
+		WikiCategory("Effector",["EFCON","EFCOFF","EFCSET","EFCWET"]),
+		"BEEP",
+		"SNDSTOP",
+		"SYSBEEP",
+	]),
+	WikiCategory("Graphics",[
+		"ACLS",
+		"BACKCOLOR",
+		"DIALOG",
+		"DISPLAY",
+		"FADE",
+		"FADECHK",
+		"RGB",
+		"RGBREAD",
+		"VISIBLE",
+		"XSCREEN",
+		WikiCategory("Text",["ATTR","CHKCHR","CLS","COLOR","CSRX","CSRY","CSRZ","FONTDEF","LOCATE","SCROLL","WIDTH","TABSTEP","INPUT","LINPUT","PRINT"]),
+		WikiCategory("Sprites",["CALLIDX","SPANIM","SPCHK","SPCHR","SPCLIP","SPCLR","SPCOL","SPCOLOR","SPCOLVEC","SPDEF","SPFUNC","SPHIDE","SPHITINFO","SPHITRC","SPHITSP","SPHOME","SPLINK","SPOFS","SPPAGE","SPROT","SPSCALE","SPSET","SPSHOW","SPSTART","SPSTOP","SPUNLINK","SPUSED","SPVAR"]),
+		WikiCategory("Background",["CALLIDX","BGANIM","BGCHK","BGCLIP","BGCLR","BGCOLOR","BGCOORD","BGCOPY","BGFILL","BGFUNC","BGGET","BGHIDE","BGHOME","BGLOAD","BGOFS","BGPAGE","BGPUT","BGROT","BGSAVE","BGSCALE","BGSCREEN","BGSHOW","BGSTART","BGSTOP","BGVAR"]),
+		WikiCategory("Graphics",["GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GOFS","GPAGE","GPAINT","GPRIO","GPSET","GPUTCHR","GSAVE","GSPOIT","GTRI"]),
+	]),
+	WikiCategory("Input",[
+		"BREPEAT",
+		"BUTTON",
+		"CONTROLLER",
+		"DIALOG",
+		"GYROA",
+		"GYROSYNC",
+		"GYROV",
+		"INKEY$",
+		"STICK",
+		"STICKEX",
+		"TOUCH",
+		"XOFF",
+		"XON",
+		"RESULT",
+		"ACCEL",
+		"INPUT",
+		"LINPUT",
+	]),
+	WikiCategory("Time",[
+		"DATE$",
+		"DTREAD",
+		"TIME$",
+		"TMREAD",
+		"MAINCNT",
+		"MILLISEC",
+		"VSYNC",
+		"WAIT",
+	]),
+	WikiCategory("Multiplayer",["MPCOUNT","MPEND","MPGET","MPHOST","MPLOCAL","MPNAME$","MPRECV","MPSEND","MPSET","MPSTART","MPSTAT"]),
+	WikiCategory("Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
+	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
+	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP","RINGCOPY","BIQUAD","BQPARAM","FFT","FFTWFN","IFFT"]+array_string),
+	WikiCategory("Editor",["BACKTRACE","CLIPBOARD","ERRLINE","ERRNUM","ERRPRG","KEY","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PRGSLOT","OPTION"]),
+	WikiCategory("System",["EXTFEATURE","FREEMEM","HARDWARE","VERSION"]),
+	WikiCategory("Labels",["DATA","READ","RESTORE","COPY","BGMSETD","GOTO","GOSUB","CHKLABEL","SPDEF","SPANIM","SPFUNC","BGFUNC","ON","IF"]),
+	WikiCategory("Flow",["BREAK","CONTINUE","ELSE","ELSEIF","END","ENDIF","FOR","GOSUB","GOTO","IF","NEXT","ON","REPEAT","RETURN","STOP","THEN","UNTIL","WEND","WHILE"]),
+	WikiCategory("Variables and Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
 ])
+
+#keywords={,,,,,,,,,,,,,,"REM",,,,,,,,}
+
+#no need for DLC category. just put a note on each page maybe?
+#well I guess it would be nice to have a list of all DLC commands to know what you're buying
+#make a "sound expansion DLC or whatever" category?
+
+#,,,
+# ,,,,,,,,,,,
+# ,,
+# ,,,,,,,,,,,
+
 
 title = {page:page for page in tree.all_pages()}
 

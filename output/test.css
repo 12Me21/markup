@@ -44,6 +44,52 @@ a:hover {
 	text-decoration: underline;
 }
 
+a.missing {
+	color: red;
+}
+
+a.category {
+	font-style: italic;
+}
+
+.navigation ul {
+	list-style: none;
+}
+
+.navigation li {
+	display: inline-block;
+}
+
+.navigation a {
+	border: 1px solid gray;
+	padding: 0.25em 0.5em;
+}
+
+.navigation .up a::before {
+	content: "Up (";
+}
+
+.navigation .up a::after {
+	content: ")";
+}
+
+.navigation .next a::before {
+	content: "Next (";
+}
+
+.navigation .next a::after {
+	content: ") >";
+}
+
+.navigation .previous a::before {
+	content: "< Previous (";
+}
+
+.navigation .previous a::after {
+	content: ")";
+}
+
+
 pre {
 	background-color: #f6f8fa;
 	border-radius: 3px;
