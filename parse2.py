@@ -118,13 +118,41 @@ def parse(code, filename):
 		nonlocal i,c,code,stack
 		return (i-2 < 0 or code[i-2] in " \t\n({'\"") and (not(c) or not(c in " \t\n,'\"")) and not(type in stack)
 	
+	class Item():
+		type=""
+		def __eq__(self,type):
+			return self.type==type
+		def __str__(self):
+			return self.type
+		def __init__(self,type):
+			self.type=type
+	
+	class Table(Item):
+		type="table"
+		columns=None
+		cells_in_row=0
+		def __init__(self):
+			pass
+	
+	class Heading(Item):
+		type="heading"
+		level=None
+		def __init__(self,level):
+			self.level=level
+	
+	class List(Item):
+		type="list"
+		indent=0
+		def __init__(self,indent):
+			self.indent=indent
+		
 	def can_end_markup(type):
 		nonlocal i,c,code,stack
 		return stack and stack[-1]==type and (i-2 < 0 or not(code[i-2] in " \t\n,'\"")) and (not(c) or c in " \t\n-.,:!?')}\"")
 	
 	def do_markup(type, tag, symbol):
 		if can_start_markup(type):
-			stack.append(type)
+			stack.append(Item(type))
 			return "<"+tag+">"
 			#no next()
 		elif can_end_markup(type):
@@ -166,45 +194,49 @@ def parse(code, filename):
 		nonlocal stack,c,i
 		output = ""
 		if stack:
-			if stack[-1][0:7]=="heading":
-				output += "</h%d>" % int(stack[-1][7:])
-				stack.pop()
+			if stack[-1]=="heading":
+				output += "</h%d>" % stack.pop().level
 				next()
 				return output
-			elif stack[-1][0:4]=="list":
-				depth = int(stack[-1][4:])
+			elif stack[-1]=="list":
+				old_indent = stack[-1].indent
 				next()
-				spaces = 0
+				indent = 0
 				while c==" " or c=="\t":
-					spaces += 1
+					indent += 4 if c=="\t" else 1
 					next()
 				if c=="+":
-					next()
-					if c==" ":
+					#next()
+					#if c==" ":
 						next()
-						if spaces>depth: #increasing list depth
-							for j in range(depth+1, spaces+1):
-								stack.append("list%d" % j)
-							output += "<ul><li>"*(spaces-depth)
-						elif spaces<depth: #decreasing list depth
-							for j in range(spaces, depth):
-								if stack[-1][0:4]=="list":
-									stack.pop()
+						#increasing list depth (assumed to increase by 1 level)
+						if indent > old_indent:
+							stack.append(List(indent))
+							output += "<ul><li>"
+						#decreasing list depth
+						elif indent < old_indent:
+							indents = []
+							while 1:
+								if stack and stack[-1]=="list":
+									if stack[-1].indent == indent:
+										break
+									elif stack[-1].indent > indent:
+										indents.append(stack[-1].indent)
+										stack.pop()
+										output += "</li></ul>"
+									else:
+										raise ParseError("Bad list indentation. Got "+str(indent)+" space while expecting: "+", ".join(str(x) for x in indents)+", (or more)")
 								else:
-									raise ParseError("item must be closed before list changes")
-							output += "</li></ul>"*(depth-spaces)+"</li><li>"
-						else:
+									raise ParseError("Bad list indentation. Item was indented less than start of list (probably)")
 							output += "</li><li>"
-					else:
-						output += "<br>+"
+						else: # same depth
+							output += "</li><li>"
+					#else:
+					#	output += "<br>+"
 				else:
-					#print("ending list",depth)
-					for j in range(depth+1):
-						if stack[-1][0:4]=="list":
-							stack.pop()
-						else:
-							raise ParseError("item must be closed before list changes")
-					output += "</li></ul>"*(depth+1)
+					while stack and stack[-1]=="list":
+						stack.pop()
+						output += "</li></ul>"
 				return output
 		output += escape_html_char(c)
 		next()
@@ -257,14 +289,17 @@ def parse(code, filename):
 					output += "<code>"
 					while 1:
 						if c=="`":
-							output += "</code>"
-							break
+							next()
+							if c=="`":
+								output += "`"
+							else:
+								output += "</code>"
+								break
 						elif c:
 							output += escape_html_char(c)
 						else:
 							raise ParseError("Unclosed ` block")
 						next()
-					next()
 			## heading and bold
 			elif c=="*":
 				if is_start_of_line():
@@ -278,7 +313,7 @@ def parse(code, filename):
 					if c==" ":
 						output += "<h%d>" % heading_level
 						next()
-						stack.append("heading%d" % heading_level)
+						stack.append(Heading(heading_level))
 						continue
 					elif heading_level!=1:
 						raise ParseError("Missing space after heading")
@@ -316,7 +351,7 @@ def parse(code, filename):
 			elif c=="+" and is_start_of_line():
 				next()
 				if c==" ":
-					stack.append("list0")
+					stack.append(List(0))
 					output += "<ul><li>"
 				else:
 					output += "+"
@@ -366,7 +401,7 @@ def parse(code, filename):
 					output += escape_html_char(c)
 					next()
 			## link
-			elif c=="[" and not "link" in stack:
+			elif c=="[":
 				next()
 				if c=="[":
 					next()
@@ -386,13 +421,17 @@ def parse(code, filename):
 						if url in Category.title:
 							output += page_link(url) + escape_html(Category.title[url]) + "</a>"
 						else:
-							output += '<a href="%s">%s</a>' % (escape_html_attribute(url), escape_html(url))
+							dot = url.rfind(".")
+							if dot>=0 and url[dot+1:].upper() in {"PNG","JPG","JPEG","BMP","GIF"}:
+								output += '<img src="%s">' % escape_html_attribute(url)
+							else:
+								output += '<a href="%s">%s</a>' % (escape_html_attribute(url), escape_html(url))
 						next()
 					# [[url][text]]
 					else: #c=="["
 						output += '<a href="' + escape_html_attribute(url) + '">'
 						next()
-						stack.append("link")
+						stack.append(Item("link"))
 				else:
 					output+="["
 			#link end
@@ -406,7 +445,7 @@ def parse(code, filename):
 					output+="]"
 			elif c=="{":
 				next()
-				stack.append("group")
+				stack.append(Item("group"))
 			elif c=="}" and stack and stack[-1]=="group":
 				next()
 				stack.pop()
@@ -421,32 +460,49 @@ def parse(code, filename):
 					else: raise ParseError("Missing | in table start")
 					skip_whitespace()
 					if c=="|": next()
-					else: raise ParseError("Missing | in table start")
-					stack.append("table")
+					else: raise ParseError("Missing | in table start (or wrong number of cells in last table row)")
+					stack.append(Table())
 					output += "<table><tbody><tr><td>"
 					skip_linebreak()
 				# other
 				else:
 					if stack and stack[-1] == "table":
+						retp=i
 						skip_whitespace() # this is used for the linebreak after | as well as the linebreak between ||
 						# table end or next row
 						if c=="|":
-							next()
-							# ||= table end
-							if c=="=":
-								next()
-								while c=="=": next()
-								if c=="|": next()
-								else: raise ParseError("Missing | in table end")
-								stack.pop()
-								output += "</td></tr></tbody></table>"
-								skip_linebreak()
-							# || next row
+							if stack[-1].columns == None: #end of the very first row in the table
+								stack[-1].columns = stack[-1].cells_in_row
+							#If the row ended before expected:
+							if stack[-1].cells_in_row < stack[-1].columns:
+								# oops, not really the start of the next row.
+								# this means we parse || as:
+								# | (table cell divider) and another | (most likely the start of a nested table)
+								stack[-1].cells_in_row += 1
+								output += "</td><td><!--table ooh-->"
+								i = retp-1; next()
+							# normal
 							else:
-								output += "</td></tr><tr><td>"
-								skip_linebreak()
+								next()
+								# ||= table end
+								if c=="=":
+									next()
+									while c=="=": next()
+									if c=="|": next()
+									else: raise ParseError("Missing | in table end")
+									stack.pop()
+									output += "</td></tr></tbody></table>"
+									skip_linebreak()
+								# || next row
+								else:
+									stack[-1].cells_in_row = 0
+									output += "</td></tr><tr><td>"
+									skip_linebreak()
 						# | next cell
 						else:
+							stack[-1].cells_in_row += 1
+							if stack[-1].columns != None and stack[-1].cells_in_row > stack[-1].columns:
+								raise ParseError("Too many cells in table row")
 							output += "</td><td>"
 					else:
 						output += "|"
@@ -455,7 +511,7 @@ def parse(code, filename):
 				next()
 		output += line_end()
 		if stack:
-			raise ParseError("Reached end of file with unclosed items: " + ",".join(stack))
+			raise ParseError("Reached end of file with unclosed items: " + ",".join(stack)) #need to fix
 		return output
 	
 	try:
@@ -484,7 +540,7 @@ def parse_file(input_dir, output_dir, name):
 			print("%-10s: missing!" % name)
 			return
 	
-	output_file.write('<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
+	output_file.write('<meta charset="UTF-8"> <link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
 	if file:
 		file.close()
 	output_file.close()
@@ -493,7 +549,7 @@ def parse_file(input_dir, output_dir, name):
 args = [
 	os.path.join(os.path.dirname(__file__), "input"),
 	os.path.join(os.path.dirname(__file__), "output"),
-	#"MAX"
+	"demo"
 ]
 
 if len(args)>=2:

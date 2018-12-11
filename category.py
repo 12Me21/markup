@@ -188,6 +188,7 @@ tree = WikiCategory("Root",[
 
 
 title = {page:page for page in tree.all_pages()}
+title["demo"]="Demo Page Title"
 
 # for any pages where the title is different from the filename, this is used:
 # titles do not NEED to be unique, but it's best if they are, to avoid confusion
