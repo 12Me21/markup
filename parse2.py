@@ -16,12 +16,16 @@ import category as Category
 
 sbhl = __import__("sbhighlight")
 
+label_suffix = 0
+
 def sbsyntax(code):
+	global label_suffix
 	list = sbhl.make_list(code)
 	#print(len(list),list)
 	if len(list)>1:
-		return sbhl.html(code)+'''<input hidden type="checkbox" id="syntax" name="syntax"><label for="syntax">show all forms</label>
-<div class="syntax-full">'''+sbhl.html("\n".join(list))+'''</div>'''
+		label_suffix += 1
+		return sbhl.html(code)+'''<input type="checkbox" id="syntax%d"><label for="syntax%d">show all forms</button></label>
+<div class="syntax-full">''' %((label_suffix,)*2) + sbhl.html("\n".join(list))+'''</div>'''
 	else:
 		return sbhl.html(code)
 
@@ -83,6 +87,8 @@ def generate_navigation(page):
 	return "".join(lines)
 
 def parse(code, filename):
+	global label_suffix
+	label_suffix=0
 	i = -1
 	c = None
 	stack = []
@@ -302,6 +308,7 @@ def parse(code, filename):
 						next()
 			## heading and bold
 			elif c=="*":
+				# todo: add anchors to headings
 				if is_start_of_line():
 					next()
 					heading_level = 1
@@ -522,16 +529,18 @@ def parse(code, filename):
 
 def parse_file(input_dir, output_dir, name):
 	filename = os.path.join(input_dir, name+".m")
-	output_file = open(os.path.join(output_dir, name+".html"),"w+")
+	output_filename = os.path.join(output_dir, name+".html")
+	if not os.path.isdir(os.path.dirname(output_filename)):
+		os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+	output_file = open(output_filename,"w+")
 	
 	file = None
 	if os.path.isfile(filename):
-		output_file = open(os.path.join(output_dir, name+".html"),"w+")
+		#output_file = open(os.path.join(output_dir, name+".html"),"w+")
 		file = open(filename)
 		text = file.read()
 		print("%-10s: converting page" % name)
 	else:
-		
 		if Category.tree.find_category(name):
 			print("%-10s: generating placeholder category page" % name)
 			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
@@ -540,7 +549,8 @@ def parse_file(input_dir, output_dir, name):
 			print("%-10s: missing!" % name)
 			return
 	
-	output_file.write('<meta charset="UTF-8"> <link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
+	depth = name.count("/")
+	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
 	if file:
 		file.close()
 	output_file.close()
@@ -549,12 +559,14 @@ def parse_file(input_dir, output_dir, name):
 args = [
 	os.path.join(os.path.dirname(__file__), "input"),
 	os.path.join(os.path.dirname(__file__), "output"),
-	"demo"
+	#"demo"
 ]
 
 if len(args)>=2:
 	assert os.path.isdir(args[0])
 	assert os.path.isdir(args[1])
+	Category.load_titles(os.path.join(args[0], "titles.txt"))
+	
 	for page in Category.title:
 		exists[page] = os.path.isfile(os.path.join(args[0], page+".m")) #(use for red links)
 	if len(args)==2:

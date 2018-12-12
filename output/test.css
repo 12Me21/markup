@@ -105,7 +105,7 @@ pre {
 	word-break: normal;
 	word-wrap: normal;
 	margin-top: 8px;
-	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;	
+	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
 	margin-bottom: 8px;
 }
 
@@ -170,26 +170,26 @@ ul {
 	padding-left: 1em;
 }
 
-input#syntax {
-  display: none;
-  height: 0;
+input[id^="syntax"] {
+	display: none;
+	height: 0;
 }
 .syntax-full {
-  display: none;
-  height: 0;
+	display: none;
+	height: 0;
 }
 
-label[for="syntax"] {
+label[for^="syntax"] {
 	border: 1px solid black;
 }
 
-input#syntax:checked ~.syntax-short {
-  display: none;
-  height: 0;
+input[id^="syntax"]:checked ~.syntax-short {
+	display: none;
+	height: 0;
 }
-input#syntax:checked ~.syntax-full {
-  display: initial;
-  height: unset;
+input[id^="syntax"]:checked ~.syntax-full {
+	display: initial;
+	height: unset;
 }
 
 /* example theme */
@@ -238,9 +238,9 @@ pre.highlight-sbconsole {
 /* new */
 pre.highlight-smilebasic > .def + .variable {animation: color-change 1s infinite;}
 @keyframes color-change {
-    0% { color: red; }
-    50% { color: blue; }
-    100% { color: red; }
+	0% { color: red; }
+	50% { color: blue; }
+	100% { color: red; }
 }
 
 pre a {

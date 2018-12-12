@@ -1,4 +1,5 @@
 import collections
+import os
 
 class OrderedSet(collections.OrderedDict, collections.MutableSet):
 	
@@ -98,10 +99,17 @@ class WikiCategory():
 				if x:
 					return x
 		return None
+	def sanitize(self): #check for EVIL ABSOLUTE PATHS
+		assert not os.path.isabs(self.name),"Illegal page name"
+		for item in self.pages:
+			if isinstance(item, WikiCategory):
+				item.sanitize()
+			else:
+				assert not os.path.isabs(item),"Illegal page name"
 
 array_string = ["COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]
 
-tree = WikiCategory("Root",[
+tree = WikiCategory("index",[
 	WikiCategory("Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY","Constants",
 		WikiCategory("Operators",["INC","DEC","DIV","MOD"]),
 		WikiCategory("Rounding",["FLOOR","ROUND","CEIL"]),
@@ -133,9 +141,9 @@ tree = WikiCategory("Root",[
 		WikiCategory("Text",["ATTR","CHKCHR","CLS","COLOR","CSRX","CSRY","CSRZ","FONTDEF","LOCATE","SCROLL","WIDTH","TABSTEP","INPUT","LINPUT","PRINT"]),
 		WikiCategory("Sprites",["CALLIDX","SPANIM","SPCHK","SPCHR","SPCLIP","SPCLR","SPCOL","SPCOLOR","SPCOLVEC","SPDEF","SPFUNC","SPHIDE","SPHITINFO","SPHITRC","SPHITSP","SPHOME","SPLINK","SPOFS","SPPAGE","SPROT","SPSCALE","SPSET","SPSHOW","SPSTART","SPSTOP","SPUNLINK","SPUSED","SPVAR"]),
 		WikiCategory("Background",["CALLIDX","BGANIM","BGCHK","BGCLIP","BGCLR","BGCOLOR","BGCOORD","BGCOPY","BGFILL","BGFUNC","BGGET","BGHIDE","BGHOME","BGLOAD","BGOFS","BGPAGE","BGPUT","BGROT","BGSAVE","BGSCALE","BGSCREEN","BGSHOW","BGSTART","BGSTOP","BGVAR"]),
-		WikiCategory("Graphics",["GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GOFS","GPAGE","GPAINT","GPRIO","GPSET","GPUTCHR","GSAVE","GSPOIT","GTRI"]),
+		WikiCategory("GRP",["GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GOFS","GPAGE","GPAINT","GPRIO","GPSET","GPUTCHR","GSAVE","GSPOIT","GTRI"]),
 	]),
-	WikiCategory("Input",[
+	WikiCategory("cat/Input",[
 		"BREPEAT",
 		"BUTTON",
 		"CONTROLLER",
@@ -165,7 +173,7 @@ tree = WikiCategory("Root",[
 		"WAIT",
 	]),
 	WikiCategory("Multiplayer",["MPCOUNT","MPEND","MPGET","MPHOST","MPLOCAL","MPNAME$","MPRECV","MPSEND","MPSET","MPSTART","MPSTAT"]),
-	WikiCategory("Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
+	WikiCategory("cat/Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
 	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
 	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP","RINGCOPY","BIQUAD","BQPARAM","FFT","FFTWFN","IFFT"]+array_string),
 	WikiCategory("Editor",["BACKTRACE","CLIPBOARD","ERRLINE","ERRNUM","ERRPRG","KEY","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PRGSLOT","OPTION"]),
@@ -174,6 +182,8 @@ tree = WikiCategory("Root",[
 	WikiCategory("Flow",["BREAK","CONTINUE","ELSE","ELSEIF","END","ENDIF","FOR","GOSUB","GOTO","IF","NEXT","ON","REPEAT","RETURN","STOP","THEN","UNTIL","WEND","WHILE"]),
 	WikiCategory("Variables and Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
 ])
+
+tree.sanitize()
 
 #keywords={,,,,,,,,,,,,,,"REM",,,,,,,,}
 
@@ -186,9 +196,17 @@ tree = WikiCategory("Root",[
 # ,,
 # ,,,,,,,,,,,
 
-
 title = {page:page for page in tree.all_pages()}
-title["demo"]="Demo Page Title"
+
+def load_titles(filename):
+	if(os.path.isfile(filename)):
+		print("Reading titles")
+		for line in open(filename).read().split("\n"):
+			colon = line.find(":")
+			if colon>=0:
+				title[line[0:colon]]=line[colon+1:]
+	else:
+		print("Warning: titles file missing")
 
 # for any pages where the title is different from the filename, this is used:
 # titles do not NEED to be unique, but it's best if they are, to avoid confusion

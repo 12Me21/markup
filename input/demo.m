@@ -66,9 +66,14 @@ This will insert that character directly into the output without it being parsed
 `# comment` (must begin at the start of a line)
 
 ** Commands
-`#+NAVIGATION` - insert navigation links
-`#+TITLE` - insert page title
-`#+PAGES` - insert a list of links to pages in the category (only allowed on category pages)
+|=======|
+|Command|Output|
+|`#+NAVIGATION`|
+#+NAVIGATION
+||`#+TITLE`|
+#+TITLE
+||`#+PAGES`|(Only allowed on category pages)|
+|===|
 
 ** Code block
 ` ``​```` language
