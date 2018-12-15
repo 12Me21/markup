@@ -550,9 +550,9 @@ def parse_file(input_dir, output_dir, name):
 			print("%-10s: generating placeholder category page" % name)
 			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
 		else:
-			text = "#+NAVIGATION\n#+TITLE\nPage missing"
-			print("%-10s: missing! (generating placeholder page)" % name)
-			#return
+			#text = "#+NAVIGATION\n#+TITLE\nPage missing"
+			print("%-10s: missing!" % name)
+			return
 	
 	depth = name.count("/")
 	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
@@ -560,26 +560,27 @@ def parse_file(input_dir, output_dir, name):
 		file.close()
 	output_file.close()
 
-#args = sys.argv
-args = [
-	os.path.join(os.path.dirname(__file__), "input"),
-	os.path.join(os.path.dirname(__file__), "output"),
-	#"demo"
-]
+args = sys.argv
+if len(args)==1:
+	args.append(os.path.join(os.path.dirname(__file__), "input"))
+	#what is the correct way to do this?
+	#I want to set list[1] and list[2], but that doesn't work since they don't exist
+	#append technically works but it relies on the list having a certain length to begin with
+	args.append(os.path.join(os.path.dirname(__file__), "output"))
 
-if len(args)>=2:
-	assert os.path.isdir(args[0])
+if len(args)>=3:
 	assert os.path.isdir(args[1])
-	Category.load_titles(os.path.join(args[0], "titles.txt"))
+	assert os.path.isdir(args[2])
+	Category.load_titles(os.path.join(args[1], "titles.txt"))
 	
 	for page in Category.title:
-		exists[page] = os.path.isfile(os.path.join(args[0], page+".m")) #(use for red links)
-	if len(args)==2:
+		exists[page] = os.path.isfile(os.path.join(args[2], page+".m")) #(use for red links)
+	if len(args)==3:
 		for page in Category.title:
-			parse_file(args[0], args[1], page)
+			parse_file(args[1], args[2], page)
 	else:
-		for page in args[2:]:
+		for page in args[3:]:
 			assert Category.title[page]
-			parse_file(args[0], args[1], page)
+			parse_file(args[1], args[2], page)
 else:
 	raise Exception("Wrong number of arguments")

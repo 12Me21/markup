@@ -107,16 +107,16 @@ class WikiCategory():
 			else:
 				assert not os.path.isabs(item),"Illegal page name"
 
-array_string = ["COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]
+array_string = []
 
 tree = WikiCategory("index",[
-	WikiCategory("Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY","Constants",
+	WikiCategory("category/Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY","Constants",
 		WikiCategory("Operators",["INC","DEC","DIV","MOD"]),
 		WikiCategory("Rounding",["FLOOR","ROUND","CEIL"]),
 		WikiCategory("Trigonometry",["PI","RAD","DEG","SIN","COS","TAN","ASIN","ACOS","ATAN","SINH","COSH","TANH"]),
 		WikiCategory("Random",["RND","RNDF","RANDOMIZE"]),
 	]),
-	WikiCategory("Audio",[
+	WikiCategory("category/Audio",[
 		WikiCategory("Music",["BGMSET","BGMSETD","BGMPLAY","BGMSTOP","BGMPAUSE","BGMCONT","BGMVOL","BGMCHK","BGMVAR","BGMCLEAR","CHKMML"]),
 		WikiCategory("Microphone",["MICDATA","MICPOS","MICSAVE","MICSIZE","MICSTART","MICSTOP"]),
 		WikiCategory("Speech",["TALK","TALKCHK","TALKSTOP"]),
@@ -127,7 +127,7 @@ tree = WikiCategory("index",[
 		"SNDSTOP",
 		"SYSBEEP",
 	]),
-	WikiCategory("Graphics",[
+	WikiCategory("category/Graphics",[
 		"ACLS",
 		"BACKCOLOR",
 		"DIALOG",
@@ -138,49 +138,22 @@ tree = WikiCategory("index",[
 		"RGBREAD",
 		"VISIBLE",
 		"XSCREEN",
-		WikiCategory("Text",["ATTR","CHKCHR","CLS","COLOR","CSRX","CSRY","CSRZ","FONTDEF","LOCATE","SCROLL","WIDTH","TABSTEP","INPUT","LINPUT","PRINT"]),
-		WikiCategory("Sprites",["CALLIDX","SPANIM","SPCHK","SPCHR","SPCLIP","SPCLR","SPCOL","SPCOLOR","SPCOLVEC","SPDEF","SPFUNC","SPHIDE","SPHITINFO","SPHITRC","SPHITSP","SPHOME","SPLINK","SPOFS","SPPAGE","SPROT","SPSCALE","SPSET","SPSHOW","SPSTART","SPSTOP","SPUNLINK","SPUSED","SPVAR"]),
-		WikiCategory("Background",["CALLIDX","BGANIM","BGCHK","BGCLIP","BGCLR","BGCOLOR","BGCOORD","BGCOPY","BGFILL","BGFUNC","BGGET","BGHIDE","BGHOME","BGLOAD","BGOFS","BGPAGE","BGPUT","BGROT","BGSAVE","BGSCALE","BGSCREEN","BGSHOW","BGSTART","BGSTOP","BGVAR"]),
-		WikiCategory("GRP",["GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GOFS","GPAGE","GPAINT","GPRIO","GPSET","GPUTCHR","GSAVE","GSPOIT","GTRI"]),
+		WikiCategory("category/Text",["ATTR","CHKCHR","CLS","COLOR","CSRX","CSRY","CSRZ","FONTDEF","LOCATE","SCROLL","WIDTH","TABSTEP","INPUT","LINPUT","PRINT"]),
+		WikiCategory("category/Sprites",["CALLIDX","SPANIM","SPCHK","SPCHR","SPCLIP","SPCLR","SPCOL","SPCOLOR","SPCOLVEC","SPDEF","SPFUNC","SPHIDE","SPHITINFO","SPHITRC","SPHITSP","SPHOME","SPLINK","SPOFS","SPPAGE","SPROT","SPSCALE","SPSET","SPSHOW","SPSTART","SPSTOP","SPUNLINK","SPUSED","SPVAR"]),
+		WikiCategory("category/Background",["CALLIDX","BGANIM","BGCHK","BGCLIP","BGCLR","BGCOLOR","BGCOORD","BGCOPY","BGFILL","BGFUNC","BGGET","BGHIDE","BGHOME","BGLOAD","BGOFS","BGPAGE","BGPUT","BGROT","BGSAVE","BGSCALE","BGSCREEN","BGSHOW","BGSTART","BGSTOP","BGVAR"]),
+		WikiCategory("category/GRP",["GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GOFS","GPAGE","GPAINT","GPRIO","GPSET","GPUTCHR","GSAVE","GSPOIT","GTRI"]),
 	]),
-	WikiCategory("cat/Input",[
-		"BREPEAT",
-		"BUTTON",
-		"CONTROLLER",
-		"DIALOG",
-		"GYROA",
-		"GYROSYNC",
-		"GYROV",
-		"INKEY$",
-		"STICK",
-		"STICKEX",
-		"TOUCH",
-		"XOFF",
-		"XON",
-		"RESULT",
-		"ACCEL",
-		"INPUT",
-		"LINPUT",
-	]),
-	WikiCategory("Time",[
-		"DATE$",
-		"DTREAD",
-		"TIME$",
-		"TMREAD",
-		"MAINCNT",
-		"MILLISEC",
-		"VSYNC",
-		"WAIT",
-	]),
-	WikiCategory("Multiplayer",["MPCOUNT","MPEND","MPGET","MPHOST","MPLOCAL","MPNAME$","MPRECV","MPSEND","MPSET","MPSTART","MPSTAT"]),
-	WikiCategory("cat/Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
-	WikiCategory("String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR"]+array_string),
-	WikiCategory("Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP","RINGCOPY","BIQUAD","BQPARAM","FFT","FFTWFN","IFFT"]+array_string),
-	WikiCategory("Editor",["BACKTRACE","CLIPBOARD","ERRLINE","ERRNUM","ERRPRG","KEY","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PRGSLOT","OPTION"]),
-	WikiCategory("System",["EXTFEATURE","FREEMEM","HARDWARE","VERSION"]),
-	WikiCategory("Labels",["DATA","READ","RESTORE","COPY","BGMSETD","GOTO","GOSUB","CHKLABEL","SPDEF","SPANIM","SPFUNC","BGFUNC","ON","IF"]),
-	WikiCategory("Flow",["BREAK","CONTINUE","ELSE","ELSEIF","END","ENDIF","FOR","GOSUB","GOTO","IF","NEXT","ON","REPEAT","RETURN","STOP","THEN","UNTIL","WEND","WHILE"]),
-	WikiCategory("Variables and Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
+	WikiCategory("category/Input",["BREPEAT","BUTTON","CONTROLLER","DIALOG","GYROA","GYROSYNC","GYROV","INKEY$","STICK","STICKEX","TOUCH","XOFF","XON","RESULT","ACCEL","INPUT","LINPUT"]),
+	WikiCategory("category/Time",["DATE$","DTREAD","TIME$","TMREAD","MAINCNT","MILLISEC","VSYNC","WAIT"]),
+	WikiCategory("category/Multiplayer",["MPCOUNT","MPEND","MPGET","MPHOST","MPLOCAL","MPNAME$","MPRECV","MPSEND","MPSET","MPSTART","MPSTAT"]),
+	WikiCategory("category/Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
+	WikiCategory("category/String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR","COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]),
+	WikiCategory("category/Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP","RINGCOPY","BIQUAD","BQPARAM","FFT","FFTWFN","IFFT","COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]),
+	WikiCategory("category/Editor",["BACKTRACE","CLIPBOARD","ERRLINE","ERRNUM","ERRPRG","KEY","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PRGSLOT","OPTION"]),
+	WikiCategory("category/System",["EXTFEATURE","FREEMEM","HARDWARE","VERSION"]),
+	WikiCategory("category/Labels",["DATA","READ","RESTORE","COPY","BGMSETD","GOTO","GOSUB","CHKLABEL","SPDEF","SPANIM","SPFUNC","BGFUNC","ON","IF"]),
+	WikiCategory("category/Flow",["BREAK","CONTINUE","ELSE","ELSEIF","END","ENDIF","FOR","GOSUB","GOTO","IF","NEXT","ON","REPEAT","RETURN","STOP","THEN","UNTIL","WEND","WHILE"]),
+	WikiCategory("category/Variables and Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
 ])
 
 tree.sanitize()
@@ -196,7 +169,13 @@ tree.sanitize()
 # ,,
 # ,,,,,,,,,,,
 
-title = {page:page for page in tree.all_pages()}
+title = {}
+for page in tree.all_pages():
+	slash = page.rfind("/")
+	if slash>=0:
+		title[page] = page[slash+1:]
+	else:
+		title[page] = page
 
 def load_titles(filename):
 	if(os.path.isfile(filename)):
