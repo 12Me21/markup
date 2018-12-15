@@ -1,19 +1,7 @@
-#planned:
-#args:
-#input directory
-#output directory
-#list of filenames (if empty, all files in the input directory (with the correct extension) are updated
-
-#input dir also contains the category tree and page title override list
-
 import sys
 import os
 import category as Category
 import shutil
-
-# def rel(path):
-	# global filename
-	# return os.path.join(os.path.dirname(filename), path)
 
 sbhl = __import__("sbhighlight")
 
@@ -22,7 +10,6 @@ label_suffix = 0
 def sbsyntax(code):
 	global label_suffix
 	list = sbhl.make_list(code)
-	#print(len(list),list)
 	if len(list)>1:
 		label_suffix += 1
 		return sbhl.html(code)+'''<input type="checkbox" id="syntax%d"><label for="syntax%d">show all forms</button></label>
@@ -197,8 +184,6 @@ def parse(code, filename):
 			self.args = [message, i]
 		def __str__(self):
 			return "%s\nOn line %d" % (self.args[0], get_line(self.args[1]))
-	
-	# make a separate stack for storing the list indentation amount
 	
 	def line_end():
 		nonlocal stack,c,i
@@ -538,14 +523,13 @@ def parse_file(input_dir, output_dir, name):
 	output_filename = os.path.join(output_dir, name+".html")
 	if not os.path.isdir(os.path.dirname(output_filename)):
 		os.makedirs(os.path.dirname(output_filename), exist_ok=True)
-	output_file = open(output_filename,"w+")
+	output_file = open(output_filename, mode="w+", encoding="utf-8")
 	
 	file = None
 	if os.path.isfile(filename):
-		#output_file = open(os.path.join(output_dir, name+".html"),"w+")
-		file = open(filename)
-		text = file.read()
 		print("%-10s: converting page" % name)
+		file = open(filename, mode="r", encoding="utf-8")
+		text = file.read()
 	else:
 		if Category.tree.find_category(name):
 			print("%-10s: generating placeholder category page" % name)
@@ -556,7 +540,12 @@ def parse_file(input_dir, output_dir, name):
 			return
 	
 	depth = name.count("/")
-	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="style.css"></link>\n\n'+parse(text, name))
+	output_file.write(
+		'<meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"></link>\n{contents}'.format(
+			base = os.path.relpath(".", os.path.dirname(name)),
+			contents = parse(text, name)
+		)
+	)
 	if file:
 		file.close()
 	output_file.close()
@@ -564,22 +553,26 @@ def parse_file(input_dir, output_dir, name):
 args = sys.argv
 if len(args)==1:
 	args.append(os.path.join(os.path.dirname(__file__), "input"))
-	#what is the correct way to do this?
-	#I want to set list[1] and list[2], but that doesn't work since they don't exist
-	#append technically works but it relies on the list having a certain length to begin with
 	args.append(os.path.join(os.path.dirname(__file__), "output"))
 
 if len(args)>=3:
-	assert os.path.isdir(args[1])
-	assert os.path.isdir(args[2])
+	assert os.path.isdir(args[1]), "missing input dir"
+	assert os.path.isdir(args[2]), "missing output dir"
 	Category.load_titles(os.path.join(args[1], "titles.txt"))
-	
+	# check which pages exist
 	for page in Category.title:
 		exists[page] = os.path.isfile(os.path.join(args[2], page+".m")) #(use for red links)
-	shutil.copy2(os.path.join(args[1],"style.css"),args[2])
+	# copy css file
+	css = os.path.join(args[1],"style.css")
+	if os.path.isfile(css):
+		shutil.copy2(css, args[2])
+	else:
+		print("Warning: Missing CSS file in input")
+	# convert all pages
 	if len(args)==3:
 		for page in Category.title:
 			parse_file(args[1], args[2], page)
+	# convert list of pages
 	else:
 		for page in args[3:]:
 			assert Category.title[page]
