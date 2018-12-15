@@ -45,6 +45,10 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
 	symmetric_difference_update = property(lambda self: self.__ixor__)
 	union = property(lambda self: self.__or__)
 
+# this is very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very bad
+def safe_path(path):
+	return not os.path.isabs(path) and not(".." in path)
+
 class WikiCategory():
 	name = ""
 	pages = []
@@ -65,16 +69,14 @@ class WikiCategory():
 				output.update(item.categories(page))
 		return output
 	# get a full list of all pages (files)
-	def all_pages(self):
-		output = set()
-		output.add(self.name)
+	def all_pages(self, list = set()):
+		list.add(self.name)
 		for item in self.pages:
 			if isinstance(item, WikiCategory):
-				output.add(item.name)
-				output.update(item.all_pages())
+				item.all_pages(list)
 			else:
-				output.add(item)
-		return output
+				list.add(item)
+		return list
 	# category, page name -> previous and next pages
 	def neighbors(self, page):
 		index = None
@@ -88,24 +90,28 @@ class WikiCategory():
 				break
 		if index != None:
 			return (str(self.pages[(index-1) % len(self.pages)]), str(self.pages[(index+1) % len(self.pages)]))
+	# check if `name` is the name of a category page
+	# return a reference to that category, or None if the page isn't a category or doesn't exist
 	def find_category(self, name):
 		if self.name == name:
 			return self
 		for item in self.pages:
 			if isinstance(item, WikiCategory):
-				if item.name == name:
-					return item
 				x = item.find_category(name)
 				if x:
 					return x
 		return None
-	def sanitize(self): #check for EVIL ABSOLUTE PATHS
-		assert not os.path.isabs(self.name),"Illegal page name"
+	#check for EVIL ABSOLUTE PATHS and duplicate names
+	def check_names(self, list = set()):
+		assert safe_path(self.name),"Illegal page name: "+self.name
+		assert not(self.name in list),"Duplicate page name: "+self.name
+		list.add(self.name)
 		for item in self.pages:
 			if isinstance(item, WikiCategory):
-				item.sanitize()
+				item.check_names(list)
 			else:
-				assert not os.path.isabs(item),"Illegal page name"
+				assert safe_path(item),"Illegal page name: "+item
+				assert not(item in list),"Duplicate page name: "+item
 
 array_string = []
 
@@ -153,21 +159,20 @@ tree = WikiCategory("index",[
 	WikiCategory("category/System",["EXTFEATURE","FREEMEM","HARDWARE","VERSION"]),
 	WikiCategory("category/Labels",["DATA","READ","RESTORE","COPY","BGMSETD","GOTO","GOSUB","CHKLABEL","SPDEF","SPANIM","SPFUNC","BGFUNC","ON","IF"]),
 	WikiCategory("category/Flow",["BREAK","CONTINUE","ELSE","ELSEIF","END","ENDIF","FOR","GOSUB","GOTO","IF","NEXT","ON","REPEAT","RETURN","STOP","THEN","UNTIL","WEND","WHILE"]),
-	WikiCategory("category/Variables and Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
+	WikiCategory("category/Variables_and_Functions",["CALL","COMMON","DIM","VAR","OUT","SWAP","CHKCALL","CHKVAR","SPFUNC","BGFUNC","DEF"]),
 ])
 
-tree.sanitize()
+# read line
+# if indent increases
+	# previous line was category page
+	# read until indent level reaches original level
 
-#keywords={,,,,,,,,,,,,,,"REM",,,,,,,,}
+
+tree.check_names()
 
 #no need for DLC category. just put a note on each page maybe?
 #well I guess it would be nice to have a list of all DLC commands to know what you're buying
 #make a "sound expansion DLC or whatever" category?
-
-#,,,
-# ,,,,,,,,,,,
-# ,,
-# ,,,,,,,,,,,
 
 title = {}
 for page in tree.all_pages():
