@@ -138,7 +138,7 @@ tr:nth-child(2n) {
 	background-color: #f6f8fa;
 }
 
-th, tr:nth-child(1) {
+th/*, tr:nth-child(1)*/ { 
 	font-weight: 600;
 }
 

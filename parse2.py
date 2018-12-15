@@ -109,6 +109,8 @@ def parse(code, filename):
 			next()
 		if c == "\n":
 			next()
+		while c in (" ","\t"):
+			next()
 	
 	def skip_whitespace(): #really this should just skip spaces, then 1 line break, then more spaces
 		nonlocal c
@@ -137,6 +139,7 @@ def parse(code, filename):
 		type="table"
 		columns=None
 		cells_in_row=0
+		header=False
 		def __init__(self):
 			pass
 	
@@ -351,6 +354,7 @@ def parse(code, filename):
 					dashes += 1
 					next()
 				if dashes >= 4:
+					skip_linebreak()
 					output += "<hr>"
 				else:
 					output += "-"*dashes
@@ -456,69 +460,70 @@ def parse(code, filename):
 			elif c=="}" and stack and stack[-1]=="group":
 				next()
 				stack.pop()
-			## tables
 			elif c=="|":
 				next()
-				# |= table start
-				if c=="=":
-					next()
-					while c=="=": next()
-					if c=="|": next()
-					else: raise ParseError("Missing | in table start")
-					skip_whitespace()
-					if c=="|": next()
-					else: raise ParseError("Missing | in table start (or wrong number of cells in last table row)")
-					stack.append(Table())
-					output += "<table><tbody><tr><td>"
+				if stack and stack[-1] == "table":
 					skip_linebreak()
-				# other
-				else:
-					if stack and stack[-1] == "table":
-						retp=i
-						skip_whitespace() # this is used for the linebreak after | as well as the linebreak between ||
-						# table end or next row
-						if c=="|":
-							if stack[-1].columns == None: #end of the very first row in the table
-								stack[-1].columns = stack[-1].cells_in_row
-							#If the row ended before expected:
-							if stack[-1].cells_in_row < stack[-1].columns:
-								# oops, not really the start of the next row.
-								# this means we parse || as:
-								# | (table cell divider) and another | (most likely the start of a nested table)
-								stack[-1].cells_in_row += 1
-								output += "</td><td><!--table ooh-->"
-								i = retp-1; next()
-							# normal
-							else:
-								next()
-								# ||= table end
-								if c=="=":
-									next()
-									while c=="=": next()
-									if c=="|": next()
-									else: raise ParseError("Missing | in table end")
-									stack.pop()
-									output += "</td></tr></tbody></table>"
-									skip_linebreak()
-								# || next row
-								else:
-									stack[-1].cells_in_row = 0
-									output += "</td></tr><tr><td>"
-									skip_linebreak()
-						# | next cell
+					# next row
+					if c=="|":
+						next()
+						if stack[-1].columns == None: #end of the very first row in the table
+							stack[-1].columns = stack[-1].cells_in_row
+						
+						if stack[-1].cells_in_row < stack[-1].columns:
+							raise ParseError("not enough cells in table row")
+							#actually start of new table ooo
+							#stack.append(Table())
+							#output += "<table><tbody><tr><td>"
 						else:
-							stack[-1].cells_in_row += 1
-							if stack[-1].columns != None and stack[-1].cells_in_row > stack[-1].columns:
-								raise ParseError("Too many cells in table row")
-							output += "</td><td>"
+							stack[-1].cells_in_row = 0
+							if stack[-1].header:
+								output += "</th></tr>"
+								stack[-1].header=False
+							else:
+								output += "</td></tr>"
+							
+							if c=="*":
+								next()
+								stack[-1].header=True
+								output += "<tr><th>"
+							else:
+								output += "<tr><td>"
+							skip_linebreak()
+					# next cell or end of table
 					else:
-						output += "|"
+						stack[-1].cells_in_row += 1
+						# end of table
+						if stack[-1].columns != None and stack[-1].cells_in_row > stack[-1].columns:
+							if stack[-1].header:
+								output += "</th>"
+							else:
+								output += "</td>"
+							stack.pop()
+							output += "</tr></tbody></table>"
+							skip_linebreak()
+						# next cell
+						else:
+							if stack[-1].header:
+								output += "</th><th>"
+							else:
+								output += "</td><td>"
+				#start of new table
+				else:
+					stack.append(Table())
+					output += "<table><tbody><tr>"
+					if c=="*":
+						next()
+						stack[-1].header=True
+						output += "<th>"
+					else:
+						output += "<td>"
 			else:
 				output += escape_html_char(c)
 				next()
 		output += line_end()
 		if stack:
-			raise ParseError("Reached end of file with unclosed items: " + ",".join(stack)) #need to fix
+			raise ParseError("Reached end of file with unclosed items: " + ",".join(str(item) for item in stack)) #need to fix
 		return output
 	
 	try:
