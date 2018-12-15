@@ -4,7 +4,7 @@ Returns the absolute value of a number (basically, this means removing the `-` s
 `ABS(NaN)` is `NaN`.  `ABS(-2147483648)` is `-2147483648` due to the size of the integer space.
 ** Syntax
 ``` sbsyntax
-ABS number OUT absolute_value
+ABS number# OUT absolute_value#
 ```
 ** Examples
 ``` smilebasic

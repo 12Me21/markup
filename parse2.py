@@ -550,9 +550,9 @@ def parse_file(input_dir, output_dir, name):
 			print("%-10s: generating placeholder category page" % name)
 			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
 		else:
-			#text = "#+NAVIGATION\n#+TITLE\nPage missing"
-			print("%-10s: missing!" % name)
-			return
+			text = "#+NAVIGATION\n#+TITLE\nPage missing"
+			print("%-10s: missing! (generating placeholder page)" % name)
+			#return
 	
 	depth = name.count("/")
 	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))

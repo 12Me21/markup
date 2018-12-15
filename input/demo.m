@@ -1,9 +1,9 @@
 ** Links
 |* Input|Output|
-|`[[www.example.com]]`|[[www.example.com]]|
+|`[[http://www.example.com]]`|[[http://www.example.com]]|
 |`[[http://kland.smilebasicsource.com/i/ezmls.jpeg]]`|[[http://kland.smilebasicsource.com/i/ezmls.jpeg]]|
 |`[[PRINT]]`|[[PRINT]] (Link to documentation page)|
-|`[[www.example.com][text]]`|[[www.example.com][text]]|
+|`[[http://www.example.com][text]]`|[[http://www.example.com][text]]|
 
 Images are inserted if the url ends in `.png`, `.jpeg`, `.jpg`, `.bmp`, or `.gif` (not case sensitive)
 For image urls that don't end in the file extension, you can use `#.png` (or something) at the end of the url to trick the parser without affecting the url
