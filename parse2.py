@@ -9,6 +9,7 @@
 import sys
 import os
 import category as Category
+import shutil
 
 # def rel(path):
 	# global filename
@@ -555,7 +556,7 @@ def parse_file(input_dir, output_dir, name):
 			return
 	
 	depth = name.count("/")
-	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="test.css"></link>\n\n'+parse(text, name))
+	output_file.write('<meta charset="UTF-8">'+'<base href="'+os.path.relpath(".",os.path.dirname(name))+'">'+'<link rel="stylesheet" href="style.css"></link>\n\n'+parse(text, name))
 	if file:
 		file.close()
 	output_file.close()
@@ -575,6 +576,7 @@ if len(args)>=3:
 	
 	for page in Category.title:
 		exists[page] = os.path.isfile(os.path.join(args[2], page+".m")) #(use for red links)
+	shutil.copy2(os.path.join(args[1],"style.css"),args[2])
 	if len(args)==3:
 		for page in Category.title:
 			parse_file(args[1], args[2], page)
