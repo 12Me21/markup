@@ -389,12 +389,14 @@ def parse(code, filename):
 						print(filename)
 						if filename != "temp":
 							raise ParseError("#+FILE is not allowed on normal pages")
-						args = args.split(" ")
-						filename = args[0]
-						if len(args)>=2:
-							Category.title[filename] = args[1]
-						elif not(filename in Category.title):
-							Category.title[filename] = default_title(filename)
+						space = args.find(" ")
+						if space>=0:
+							filename = args[0:space]
+							Category.title[filename] = args[space:]
+						else:
+							filename = args
+							if not(filename in Category.title):
+								Category.title[filename] = default_title(filename)
 					else:
 						raise ParseError("Unrecognized command: "+command)
 					next()
@@ -528,26 +530,31 @@ def parse(code, filename):
 		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
-def parse_file(input_dir, output_dir, name):
-	filename = os.path.join(input_dir, name+".m")
-	output_filename = os.path.join(output_dir, name+".html")
-	if not os.path.isdir(os.path.dirname(output_filename)):
-		os.makedirs(os.path.dirname(output_filename), exist_ok=True)
-	output_file = open(output_filename, mode="w+", encoding="utf-8")
-	
-	file = None
-	if os.path.isfile(filename):
-		print("%-10s: converting page" % name)
-		file = open(filename, mode="r", encoding="utf-8")
-		text = file.read()
+def parse_file(input_dir, output_dir, name, s = False):
+	if s:
+		text = sys.stdin.read()
+		output_file = sys.stdout
 	else:
-		if Category.tree.find_category(name):
-			print("%-10s: generating placeholder category page" % name)
-			text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
+		filename = os.path.join(input_dir, name+".m")
+		output_filename = os.path.join(output_dir, name+".html")
+		if not os.path.isdir(os.path.dirname(output_filename)):
+			os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+		output_file = open(output_filename, mode="w+", encoding="utf-8")
+		
+		file = None
+		if os.path.isfile(filename):
+			print("%-10s: converting page" % name)
+			file = open(filename, mode="r", encoding="utf-8")
+			text = file.read()
+			file.close()
 		else:
-			#text = "#+NAVIGATION\n#+TITLE\nPage missing"
-			print("%-10s: missing!" % name)
-			return
+			if Category.tree.find_category(name):
+				print("%-10s: generating placeholder category page" % name)
+				text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
+			else:
+				#text = "#+NAVIGATION\n#+TITLE\nPage missing"
+				print("%-10s: missing!" % name)
+				return
 	
 	depth = name.count("/")
 	output_file.write(
@@ -556,36 +563,42 @@ def parse_file(input_dir, output_dir, name):
 			contents = parse(text, name)
 		)
 	)
-	if file:
-		file.close()
-	output_file.close()
+	
+	if not s:
+		output_file.close()
 
 args = sys.argv
 if len(args)==1:
 	args.append(os.path.join(os.path.dirname(__file__), "input"))
 	args.append(os.path.join(os.path.dirname(__file__), "output"))
+	#args.append("")
 
 if len(args)>=3:
 	assert os.path.isdir(args[1]), "missing input dir"
 	assert os.path.isdir(args[2]), "missing output dir"
 	Category.load_titles(os.path.join(args[1], "titles.txt"))
-	# check which pages exist
-	for page in Category.title:
-		exists[page] = os.path.isfile(os.path.join(args[1], page+".m")) #(use for red links)
-	# copy css file
-	css = os.path.join(args[1],"style.css")
-	if os.path.isfile(css):
-		shutil.copy(css, args[2])
-	else:
-		print("Warning: Missing CSS file in input")
 	# convert all pages
 	if len(args)==3:
+		# check which pages exist
+		for page in Category.title:
+			exists[page] = os.path.isfile(os.path.join(args[1], page+".m")) #(use for red links)
+		# copy css file
+		css = os.path.join(args[1],"style.css")
+		if os.path.isfile(css):
+			shutil.copy(css, args[2])
+		else:
+			print("Warning: Missing CSS file in input")
+		
 		for page in Category.title:
 			parse_file(args[1], args[2], page)
 	# convert list of pages
 	else:
-		for page in args[3:]:
-			assert page == "temp" or Category.title[page]
-			parse_file(args[1], args[2], page)
+		if args[3]=="":
+			parse_file(args[1], args[2], "temp", True)
+		else:
+			print("warning: unstable")
+			for page in args[3:]:
+				assert page == "temp" or Category.title[page]
+				parse_file(args[1], args[2], page)
 else:
 	raise Exception("Wrong number of arguments")
