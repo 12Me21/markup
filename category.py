@@ -152,7 +152,7 @@ tree = WikiCategory("index",[
 	WikiCategory("category/Input",["BREPEAT","BUTTON","CONTROLLER","DIALOG","GYROA","GYROSYNC","GYROV","INKEY$","STICK","STICKEX","TOUCH","XOFF","XON","RESULT","ACCEL","INPUT","LINPUT"]),
 	WikiCategory("category/Time",["DATE$","DTREAD","TIME$","TMREAD","MAINCNT","MILLISEC","VSYNC","WAIT"]),
 	WikiCategory("category/Multiplayer",["MPCOUNT","MPEND","MPGET","MPHOST","MPLOCAL","MPNAME$","MPRECV","MPSEND","MPSET","MPSTART","MPSTAT"]),
-	WikiCategory("category/Files",["DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
+	WikiCategory("category/Files",["filenames","DLCOPEN","FILES","PROJECT","RENAME","RESULT","SAVE","LOAD","DELETE","CHKFILE","EXEC","USE"]),
 	WikiCategory("category/String",["ASC","CHR$","VAL","STR$","FORMAT$","HEX$","BIN$","INC","MID$","LEFT$","RIGHT$","SUBST$","INSTR","COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]),
 	WikiCategory("category/Array",["FILL","SORT","RSORT","MIN","MAX","ARYOP","RINGCOPY","BIQUAD","BQPARAM","FFT","FFTWFN","IFFT","COPY","PUSH","POP","SHIFT","UNSHIFT","LEN"]),
 	WikiCategory("category/Editor",["BACKTRACE","CLIPBOARD","ERRLINE","ERRNUM","ERRPRG","KEY","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PRGSLOT","OPTION"]),
