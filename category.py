@@ -174,13 +174,15 @@ tree.check_names()
 #well I guess it would be nice to have a list of all DLC commands to know what you're buying
 #make a "sound expansion DLC or whatever" category?
 
-title = {}
-for page in tree.all_pages():
+def default_title(page):
 	slash = page.rfind("/")
 	if slash>=0:
-		title[page] = page[slash+1:]
-	else:
-		title[page] = page
+		return page[slash+1:]
+	return page
+
+title = {}
+for page in tree.all_pages():
+	title[page] = default_title(page)
 
 def load_titles(filename):
 	if(os.path.isfile(filename)):

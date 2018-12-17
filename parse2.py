@@ -238,7 +238,7 @@ def parse(code, filename):
 		return output
 	
 	def parse():
-		nonlocal i,c,code
+		nonlocal i,c,code,filename
 		output=""
 		next()
 		while c:
@@ -385,6 +385,16 @@ def parse(code, filename):
 							name = str(page)
 							output += "<li>"+page_link(name)+Category.title[name]+"</a></li>"
 						output += "</ul>"
+					elif command == "FILE":
+						print(filename)
+						if filename != "temp":
+							raise ParseError("#+FILE is not allowed on normal pages")
+						args = args.split(" ")
+						filename = args[0]
+						if len(args)>=2:
+							Category.title[filename] = args[1]
+						elif not(filename in Category.title):
+							Category.title[filename] = default_title(filename)
 					else:
 						raise ParseError("Unrecognized command: "+command)
 					next()
@@ -561,7 +571,7 @@ if len(args)>=3:
 	Category.load_titles(os.path.join(args[1], "titles.txt"))
 	# check which pages exist
 	for page in Category.title:
-		exists[page] = os.path.isfile(os.path.join(args[2], page+".m")) #(use for red links)
+		exists[page] = os.path.isfile(os.path.join(args[1], page+".m")) #(use for red links)
 	# copy css file
 	css = os.path.join(args[1],"style.css")
 	if os.path.isfile(css):
@@ -575,7 +585,7 @@ if len(args)>=3:
 	# convert list of pages
 	else:
 		for page in args[3:]:
-			assert Category.title[page]
+			assert page == "temp" or Category.title[page]
 			parse_file(args[1], args[2], page)
 else:
 	raise Exception("Wrong number of arguments")
