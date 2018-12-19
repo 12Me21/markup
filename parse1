@@ -1,0 +1,82 @@
+def highlight(code, language):
+	return code
+
+def parse(code):
+	i = -1
+	c = None
+	
+	def next():
+		nonlocal i
+		nonlocal c
+		i += 1
+		if i < len(code):
+			c = code[i]
+		else:
+			c = ""
+	
+	def parse():
+		nonlocal i
+		nonlocal c
+		output = ""
+		next()
+		while c:
+			if c=="`":
+				next()
+				if c=="`":
+					next()
+					if c=="`":
+						output += "<code>"
+						language = ""
+						while 1:
+							next()
+							if c=="\n":
+								break
+							elif c:
+								language += c
+							else:
+								raise Exception("Reached end of input while reading ``` start")
+						code = ""
+						while 1:
+							next()
+							if c=="`":
+								next()
+								if c=="`":
+									next()
+									if c=="`":
+										break;
+									else:
+										code += "``"
+								else:
+									code += "`"
+							if c:
+								code += c
+							else:
+								raise Exception("Reached end of input while reading code inside ```")
+						output += highlight(code, language)
+						output += "</code>"
+						next()
+						if c=="\n":
+							next()
+					else:
+						output += "``"
+				else:
+					output += "<code>"
+					while 1:
+						next()
+						if c=="`":
+							output += "</code>"
+							break
+						elif c:
+							output += c
+						else:
+							raise Exception("Unclosed ` block")
+			elif c=="\\":
+				next()
+				if c:
+					output += c
+			else:
+				output += c
+			next()
+		return output
+	
+	return parse()
