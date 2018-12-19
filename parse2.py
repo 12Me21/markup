@@ -362,6 +362,7 @@ def parse(code, filename):
 						while c and c!="\n":
 							next()
 						args=code[start:i]
+					
 					if command == "NAVIGATION":
 						output += generate_navigation(filename)
 					elif command == "TITLE":
