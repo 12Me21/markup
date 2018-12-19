@@ -511,7 +511,7 @@ def parse(code, filename):
 def parse_file(input_dir, output_dir, name, stdio = False):
 	if stdio:
 		output_file = sys.stdout
-		text = "test"#sys.stdin.read()
+		text = sys.stdin.read()
 	else:
 		filename = os.path.join(input_dir, name+".m")
 		output_filename = os.path.join(output_dir, name+".html")
