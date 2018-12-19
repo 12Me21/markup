@@ -362,7 +362,7 @@ def parse(code, filename):
 						while c and c!="\n":
 							next()
 						args=code[start:i]
-					elif command == "NAVIGATION":
+					if command == "NAVIGATION":
 						output += generate_navigation(filename)
 					elif command == "TITLE":
 						output += "<h1>"+escape_html(Category.title[filename])+"</h1>"
