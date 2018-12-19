@@ -100,14 +100,8 @@ def parse(code, filename):
 		while c in (" ","\t"):
 			next()
 	
-	def skip_whitespace(): #really this should just skip spaces, then 1 line break, then more spaces
-		nonlocal c
-		while c in c in (" ","\t","\n"):
-			next()
-	
 	def is_start_of_line():
 		nonlocal i
-		#print("SOL check",i)
 		return i==0 or code[i-1]=="\n"
 	
 	def can_start_markup(type):
@@ -368,14 +362,10 @@ def parse(code, filename):
 						while c and c!="\n":
 							next()
 						args=code[start:i]
-					if command == "INCLUDE":
-						pass
-						# output += sub_parse(open(rel(args)).read())
 					elif command == "NAVIGATION":
 						output += generate_navigation(filename)
 					elif command == "TITLE":
-						title_html = escape_html(Category.title[filename])
-						output += "<h1>"+title_html+"</h1><title>"+title_html+"</title>"
+						output += "<h1>"+escape_html(Category.title[filename])+"</h1>"
 					elif command == "PAGES":
 						category = Category.tree.find_category(filename)
 						if not category:
@@ -385,18 +375,6 @@ def parse(code, filename):
 							name = str(page)
 							output += "<li>"+page_link(name)+Category.title[name]+"</a></li>"
 						output += "</ul>"
-					elif command == "FILE":
-						print(filename)
-						if filename != "temp":
-							raise ParseError("#+FILE is not allowed on normal pages")
-						space = args.find(" ")
-						if space>=0:
-							filename = args[0:space]
-							Category.title[filename] = args[space:]
-						else:
-							filename = args
-							if not(filename in Category.title):
-								Category.title[filename] = default_title(filename)
 					else:
 						raise ParseError("Unrecognized command: "+command)
 					next()
@@ -530,10 +508,10 @@ def parse(code, filename):
 		print(e)
 		return '<div class="error-message">'+escape_html(str(e))+"</div>"+escape_html(code)
 
-def parse_file(input_dir, output_dir, name, s = False):
-	if s:
-		text = sys.stdin.read()
+def parse_file(input_dir, output_dir, name, stdio = False):
+	if stdio:
 		output_file = sys.stdout
+		text = "test"#sys.stdin.read()
 	else:
 		filename = os.path.join(input_dir, name+".m")
 		output_filename = os.path.join(output_dir, name+".html")
@@ -556,15 +534,16 @@ def parse_file(input_dir, output_dir, name, s = False):
 				print("%-10s: missing!" % name)
 				return
 	
-	depth = name.count("/")
 	output_file.write(
-		'<meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"></link>\n{contents}'.format(
-			base = os.path.relpath(".", os.path.dirname(name)),
-			contents = parse(text, name)
+		'<head><meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"></link><title>{title}</title></head>\n{contents}'.format(
+			base = output_dir,
+			#navigation = generate_navigation(name), {navigation}\n
+			contents = parse(text, name),
+			title = escape_html(Category.title[name]),
 		)
 	)
 	
-	if not s:
+	if not stdio:
 		output_file.close()
 
 args = sys.argv
@@ -572,6 +551,12 @@ if len(args)==1:
 	args.append(os.path.join(os.path.dirname(__file__), "input"))
 	args.append(os.path.join(os.path.dirname(__file__), "output"))
 	#args.append("")
+	#args.append("temp")
+	#args.append("Temporary Page")
+
+# input output - parse all pages
+# input output page1 page2 ... - parse list of pages
+# input output "" name title - preview thing using stdin/stdout
 
 if len(args)>=3:
 	assert os.path.isdir(args[1]), "missing input dir"
@@ -591,14 +576,16 @@ if len(args)>=3:
 		
 		for page in Category.title:
 			parse_file(args[1], args[2], page)
-	# convert list of pages
+	
 	else:
-		if args[3]=="":
-			parse_file(args[1], args[2], "temp", True)
+		if args[3]=="" and len(args)==6:
+			# preview
+			Category.title[args[4]] = args[5]
+			parse_file(args[1], args[2], args[4], stdio=True)
 		else:
-			print("warning: unstable")
+			# convert list of pages
 			for page in args[3:]:
-				assert page == "temp" or Category.title[page]
+				assert page in Category.title, "invalid page: "+page
 				parse_file(args[1], args[2], page)
 else:
 	raise Exception("Wrong number of arguments")

@@ -191,8 +191,8 @@ def load_titles(filename):
 			colon = line.find(":")
 			if colon>=0:
 				title[line[0:colon]]=line[colon+1:]
-	else:
-		print("Warning: titles file missing")
+	#else:
+		#print("Warning: titles file missing")
 
 # for any pages where the title is different from the filename, this is used:
 # titles do not NEED to be unique, but it's best if they are, to avoid confusion
