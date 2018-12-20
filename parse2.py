@@ -417,7 +417,10 @@ def parse(code, filename):
 						next()
 					# [[url][text]]
 					else: #c=="["
-						output += '<a href="' + escape_html_attribute(url) + '">'
+						if url in Category.title:
+							output += page_link(url)
+						else:
+							output += '<a href="' + escape_html_attribute(url) + '">'
 						next()
 						stack.append(Item("link"))
 				else:
