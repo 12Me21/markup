@@ -23,7 +23,7 @@ def page_link(page):
 	if Category.tree.find_category(page):
 		return '<a href="%s.html" class="category">' % escape_html_attribute(page)
 	else:
-		if exists[page]:
+		if page in exists:
 			return '<a href="%s.html">' % escape_html_attribute(page)
 		else:
 			return '<a href="%s.html" class="missing">' % escape_html_attribute(page)
