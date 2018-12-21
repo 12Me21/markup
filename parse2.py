@@ -23,9 +23,10 @@ def page_link(page):
 	if Category.tree.find_category(page):
 		return '<a href="%s.html" class="category">' % escape_html_attribute(page)
 	else:
-		if page in exists:
+		if page in exists and exists[page]:
 			return '<a href="%s.html">' % escape_html_attribute(page)
 		else:
+			
 			return '<a href="%s.html" class="missing">' % escape_html_attribute(page)
 
 def sbconsole(code):
@@ -574,6 +575,8 @@ if len(args)>=3:
 		# check which pages exist
 		for page in Category.title:
 			exists[page] = os.path.isfile(os.path.join(args[1], page+".m")) #(use for red links)
+		print(exists)
+		
 		# copy css file
 		css = os.path.join(args[1],"style.css")
 		if os.path.isfile(css):
