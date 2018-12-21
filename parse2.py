@@ -37,13 +37,13 @@ highlighters = {
 	"sbconsole": sbconsole
 }
 
+def escape_html(code):
+	return code.replace("&","&amp;").replace("<","&lt;").replace("\n","<br>")
+
 def highlight(code, language):
 	if language in highlighters:
 		return highlighters[language](code)
-	return code
-
-def escape_html(code):
-	return code.replace("&","&amp;").replace("<","&lt;").replace("\n","<br>")
+	return escape_html(code)
 
 def escape_html_char(char):
 	if char=="<":
