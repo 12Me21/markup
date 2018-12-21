@@ -12,7 +12,7 @@ def sbsyntax(code):
 	list = sbhl.make_list(code)
 	if len(list)>1:
 		label_suffix += 1
-		return sbhl.html(code)+'''<input type="checkbox" id="syntax%d"><label for="syntax%d">show all forms</button></label>
+		return sbhl.html(code)+'''<input type="checkbox" id="syntax%d"><label for="syntax%d">show all forms</label>
 <div class="syntax-full">''' %((label_suffix,)*2) + sbhl.html("\n".join(list))+'''</div>'''
 	else:
 		return sbhl.html(code)
