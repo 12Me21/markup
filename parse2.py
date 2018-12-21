@@ -352,16 +352,18 @@ def parse(code, filename):
 				if c=="+":
 					next()
 					start=i
+					command = ""
 					while c and c!=" " and c!="\n":
+						command += c
 						next()
-					command = code[start:i]
+					
 					args = ""
 					if c==" ":
 						next()
 						start = i
 						while c and c!="\n":
+							args += c
 							next()
-						args=code[start:i]
 					
 					if command == "NAVIGATION":
 						output += generate_navigation(filename)
@@ -539,7 +541,7 @@ def parse_file(input_dir, output_dir, name, stdio = False):
 				return
 	
 	output_file.write(
-		'<head><meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"></link><title>{title}</title></head>\n{contents}'.format(
+		'<!DOCTYPE html><html><head><meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"><title>{title}</title></head>\n<body>{contents}</body></html>'.format(
 			base = output_dir,
 			#navigation = generate_navigation(name), {navigation}\n
 			contents = parse(text, name),
@@ -574,7 +576,7 @@ if len(args)>=3:
 		# copy css file
 		css = os.path.join(args[1],"style.css")
 		if os.path.isfile(css):
-			shutil.copy(css, args[2])
+			shutil.copy2(css, args[2])
 		else:
 			print("Warning: Missing CSS file in input")
 		
