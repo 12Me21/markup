@@ -536,13 +536,13 @@ def parse_file(input_dir, output_dir, name, stdio = False):
 				print("%-10s: generating placeholder category page" % name)
 				text = "#+NAVIGATION\n#+TITLE\n#+PAGES"
 			else:
-				#text = "#+NAVIGATION\n#+TITLE\nPage missing"
+				text = "#+NAVIGATION\n#+TITLE\nPage missing"
 				print("%-10s: missing!" % name)
-				return
+				#return
 	
 	output_file.write(
 		'<!DOCTYPE html><html><head><meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"><title>{title}</title></head>\n<body>{contents}</body></html>'.format(
-			base = os.path.relpath(".", os.path.dirname("output_dir")),
+			base = os.path.relpath(output_dir, os.path.dirname(output_filename)),
 			#base = output_dir,
 			#navigation = generate_navigation(name), {navigation}\n
 			contents = parse(text, name),
