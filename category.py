@@ -116,6 +116,7 @@ class WikiCategory():
 array_string = []
 
 tree = WikiCategory("index",[
+	"demo",
 	WikiCategory("category/Math",["ABS","SGN","POW","SQR","LOG","EXP","MIN","MAX","CLASSIFY","Constants",
 		WikiCategory("Operators",["INC","DEC","DIV","MOD"]),
 		WikiCategory("Rounding",["FLOOR","ROUND","CEIL"]),
