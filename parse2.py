@@ -542,8 +542,8 @@ def parse_file(input_dir, output_dir, name, stdio = False):
 	
 	output_file.write(
 		'<!DOCTYPE html><html><head><meta charset="UTF-8"><base href="{base}"><link rel="stylesheet" href="style.css"><title>{title}</title></head>\n<body>{contents}</body></html>'.format(
-			base = os.path.relpath(output_dir, os.path.dirname(output_filename)),
-			#base = output_dir,
+			#base = os.path.relpath(output_dir, os.path.dirname(output_filename)),
+			base = output_dir,
 			#navigation = generate_navigation(name), {navigation}\n
 			contents = parse(text, name),
 			title = escape_html(Category.title[name]),
