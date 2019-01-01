@@ -81,14 +81,13 @@ def parse(code, filename):
 	i = -1
 	c = None
 	stack = []
+	code = code.replace("\r","")
 	
 	def next():
 		nonlocal i,c
 		i += 1
 		if i < len(code):
 			c = code[i]
-			if c=="\r":
-				next()
 		else:
 			c = ""
 	
@@ -580,7 +579,7 @@ if len(args)>=3:
 		# copy css file
 		css = os.path.join(args[1],"style.css")
 		if os.path.isfile(css):
-			shutil.copy2(css, args[2])
+			shutil.copy(css, args[2])
 		else:
 			print("Warning: Missing CSS file in input")
 		
