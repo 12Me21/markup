@@ -579,7 +579,10 @@ if len(args)>=3:
 		# copy css file
 		css = os.path.join(args[1],"style.css")
 		if os.path.isfile(css):
-			shutil.copy(css, os.path.join(args[2],"style.css"))
+			try:
+				shutil.copy(css, os.path.join(args[2],"style.css"))
+			except PermissionError:
+				print("darn.")
 		else:
 			print("Warning: Missing CSS file in input")
 		

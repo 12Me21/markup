@@ -187,7 +187,7 @@ for page in tree.all_pages():
 
 def load_titles(filename):
 	if(os.path.isfile(filename)):
-		print("Reading titles")
+		#print("Reading titles")
 		for line in open(filename).read().split("\n"):
 			colon = line.find(":")
 			if colon>=0:
