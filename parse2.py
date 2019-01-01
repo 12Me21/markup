@@ -580,7 +580,7 @@ if len(args)>=3:
 		css = os.path.join(args[1],"style.css")
 		if os.path.isfile(css):
 			try:
-				shutil.copy(css, os.path.join(args[2],"style.css"))
+				shutil.copyfile(css, os.path.join(args[2],"style.css"))
 			except PermissionError:
 				print("darn.")
 		else:
