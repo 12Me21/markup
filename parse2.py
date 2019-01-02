@@ -75,6 +75,10 @@ def generate_navigation(page):
 		))
 	return "".join(lines)
 
+#todo: this should remove weird chars and other stuff
+def anchor_name(text):
+	return text.replace(" ","-")
+
 def parse(code, filename):
 	global label_suffix
 	label_suffix=0
@@ -236,6 +240,7 @@ def parse(code, filename):
 		output=""
 		next()
 		while c:
+			# todo: make ``whatever` -> <code>`whatever</code>
 			## code block
 			if c=="`":
 				next()
@@ -410,6 +415,10 @@ def parse(code, filename):
 						# check if url is a page filename
 						if url in Category.title:
 							output += page_link(url) + escape_html(Category.title[url]) + "</a>"
+						elif url.isdigit():
+							output += '<sup><a href="%s" name="%s">%s</a></sup>' % (escape_html_attribute(filename+".html#"+url), escape_html_attribute(url), escape_html(url))
+						elif url.startswith("#"):
+							output += '<sup><a href="%s">%s</a></sup>' % (escape_html_attribute(filename+".html"+url), escape_html(url[1:]))
 						else:
 							dot = url.rfind(".")
 							if dot>=0 and url[dot+1:].upper() in {"PNG","JPG","JPEG","BMP","GIF"}:
@@ -421,6 +430,8 @@ def parse(code, filename):
 					else: #c=="["
 						if url in Category.title:
 							output += page_link(url)
+						elif url.startswith("#"):
+							output += '<a href="' + escape_html_attribute(filename+".html#"+url)+ '">'
 						else:
 							output += '<a href="' + escape_html_attribute(url) + '">'
 						next()
