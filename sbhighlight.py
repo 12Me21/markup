@@ -106,7 +106,7 @@ def highlight_sb(code,callback):
 		elif c=='"':
 			next()
 			# read characters until another quote, line ending, or end of input
-			while c and not c in {'"','\n','r'}:
+			while c and not c in {'"','\n','\r'}:
 				next()
 			# read closing quote
 			if c=='"':
