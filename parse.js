@@ -1,5 +1,5 @@
 var highlighters = {
-	 smilebasic: sbhl.html,
+	 smilebasic: undefined,//sbhl.html,
 	 sbconsole: function(code){
 		  return code
 	 },
@@ -46,7 +46,7 @@ function parse(code){
 					 return true;
 		  return false;
 	 }
-	 
+
 	 function next(){
 		  i++;
 		  c = code[i];
@@ -55,7 +55,7 @@ function parse(code){
 	 function peek(stack){
 		  return stack[stack.length-1];
 	 }
-	 
+
 	 function skip_linebreak(){
 		  while(c==' ' || c =='\t')
 				next();
@@ -70,15 +70,25 @@ function parse(code){
 	 }
 
 	 function can_start_markup(type){
-		  return (i-2 < 0 || test(code[i-1]," \t\n){'\"")) && (!c or !test(c," \t\n,'\"")) && !has_type(stack, type);
+		  console.log(c,code[i-1]);
+		  return (i-2 < 0 || test(code[i-2]," \t\n){'\"")) &&
+				(!c || !test(c," \t\n,'\"")) &&
+				!has_type(stack, type);
+	 }
+
+	 function can_end_markup(type){
+		  return stack.length && peek(stack).type==type && (i-2 < 0 || !test(code[i-2]," \t\n,'\"")) && (!c || test(c," \t\n-.,:!?')}\""));
 	 }
 
 	 function do_markup(type, tag, symbol){
+		  console.log("doing markup heck",stack)
 		  if(can_start_markup(type)){
+				console.log("starting")
 				stack.push({type:type});
+				return "<"+tag+">"
 		  }else if(can_end_markup(type)){
 				stack.pop();
-				return "</"+tag+">";
+				return "</" + tag + ">";
 		  }else{
 				return symbol;
 		  }
@@ -116,7 +126,7 @@ function parse(code){
 						  }else if(indent < old_indent){
 								var indents = [];
 								while(1){
-									 
+
 									 if(stack.length && peek(stack).type == "list"){
 										  if(peek(stack).indent == indent)
 												break;
@@ -290,15 +300,17 @@ function parse(code){
 									 if(url[dot]=='.')
 										  break;
 								}
-								if(dot>=0 && ["png","jpg","jpeg","bmp","gif"].indexOf(url.substr(dot+1).toLowerCase())){
+								if(dot>=0 && ["png","jpg","jpeg","bmp","gif"].indexOf(url.substr(dot+1).toLowerCase())!=-1){
 									 output += '<img src="' + escape_html_attribute(url) + '">';
 								}else{
 									 output += '<a href="' + escape_html_attribute(url) + '">' + escape_html(url) + "</a>";
 								}
 								next();
-						  // [[url][text]
+								// [[url][text]
 						  }else{ //c is '['
 								output += '<a href="' + escape_html_attribute(url) + '">';
+								next();
+								stack.push({type:"link"});
 						  }
 					 }else{
 						  output += "[";
@@ -313,18 +325,22 @@ function parse(code){
 						  output += "]";
 				}else if(c=='{'){
 					 next();
-					 stack.append({type:"group"});
+					 stack.push({type:"group"});
 				}else if(c=='}' && stack.length && peek(stack).type=="group"){
 					 next();
 					 stack.pop();
 				}else if(c=='|'){
+
 					 next();
 					 if(stack.length && peek(stack).type=="table"){
 						  skip_linebreak();
+						  // next row
 						  if(c=='|'){
+								console.log("new table rowww",peek(stack))
 								next();
 								if(peek(stack).columns == null){
-									 peek(stack).columns == peek(stack).cells_in_row;
+									 console.log("first row or something")
+									 peek(stack).columns = peek(stack).cells_in_row;
 								}
 								if(peek(stack).cells_in_row < peek(stack).columns){
 									 throw Error("not enough cells in table row");
@@ -349,6 +365,7 @@ function parse(code){
 								peek(stack).cells_in_row++;
 								//end of table
 								if(peek(stack).columns != null && peek(stack).cells_in_row > peek(stack).columns){
+									 console.log("table end")
 									 if(peek(stack).header){
 										  output += "</th>";
 									 }else{
@@ -357,8 +374,9 @@ function parse(code){
 									 stack.pop();
 									 output += "</tr></tbody></table>";
 									 skip_linebreak();
-							   // next cell
+									 // next cell
 								}else{
+									 console.log("next cell",peek(stack).columns)
 									 if(peek(stack).header){
 										  output += "</th><th>";
 									 }else{
@@ -366,8 +384,9 @@ function parse(code){
 									 }
 								}
 						  }
-					 // start of new table
+						  // start of new table
 					 }else{
+						  console.log("new table")
 						  stack.push({type:"table",columns:null,cells_in_row:0,header:false});
 						  output += "<table><tbody><tr>";
 						  if(c=="*"){
@@ -384,7 +403,7 @@ function parse(code){
 		  }
 		  output == line_end();
 		  if(stack.length){
-				throw Error("Reached end of file with unclosed items: " + ",".join(str(item) for item in stack)) //need to fix ???
+				throw Error("Reached end of file with unclosed items: ") //need to fix ???
 		  }
 		  return output;
 	 }
@@ -397,10 +416,10 @@ function parse(code){
 }
 
 
-					 
-						  
-						
 
-		  
-										  
-						  
+
+
+
+
+
+
