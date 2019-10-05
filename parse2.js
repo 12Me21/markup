@@ -2,16 +2,20 @@ function escape_html(text){
 	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 
+function tags(name) {
+	return {start: "<"+name+">", end: "</"+name+">"};
+}
+
 options = {
+	escape_text: escape_html,
+	
 	heading: {
 		start: ["<h1>","<h2>","<h3>","<h4>","<h5>","<h6>"],
 		end: ["</h1>","</h2>","</h3>","</h4>","</h5>","</h6>"],
 	},
-	inline_code: {start: "<code>", end: "</code>"},
-	escape_text: escape_html,
 	horizontal_line: "<hr>",
-	list: {start: "<ul>", end: "</ul>"},
-	list_item: {start: "<li>", end: "</li>"},
+	//code
+	inline_code: tags("code"),
 	code_block: function(text, language) {
 		var output = '<pre class="highlight-sb">';
 		var prevType = false;
@@ -37,6 +41,19 @@ options = {
 		output += "</pre>";
 		return output;
 	},
+	//lists
+	list: tags("ul"),
+	list_item: tags("li"),
+	//table stuff
+	table: {start: "<table><tbody>", end: "</tbody></table>"},
+	row: tags("tr"),
+	cell: tags("td"),
+	header_cell: tags("th"),
+	//text styles
+	bold: tags("b"),
+	italic: tags("i"),
+	underline: tags("u"),
+	strikethrough: tags("s"),
 };
 
 function parse(code, options) { //with (options){
@@ -62,6 +79,37 @@ function parse(code, options) { //with (options){
 			scan();
 			output += options.escape_text(c);
 			scan();
+		//===============
+		// { group start
+		} else if (c == '{') {
+			scan();
+			stack.push(["group"]);
+		//=============
+		// } group end
+		} else if (c == '}') {
+			scan();
+			close_all(false);
+		//========
+		// * bold
+		} else if (c == '*') {
+			scan();
+			do_markup("bold", options.bold, '*');
+		//========
+		// / italic
+		} else if (c == '/') {
+			scan();
+			do_markup("italic", options.italic, '/');
+		//========
+		// _ underline
+		} else if (c == '_') {
+			scan();
+			do_markup("underline", options.underline, '_');
+		//=================
+		// ~ strikethrough
+		// perhaps it should be +text+ or =text= or ...
+		} else if (c == '~') {
+			scan();
+			do_markup("strikethrough", options.strikethrough, '~');
 		//==============
 		// #... Heading
 		} else if (c == '#' && start_of_line) { //todo: prevent nested headings somehow
@@ -104,6 +152,75 @@ function parse(code, options) { //with (options){
 			// -? nothing
 			} else { //no scan here!
 				output += options.escape_text('-');
+			}
+		//=================
+		// |... table
+		} else if (c == '|') {
+			// I think somewhere here I use skip_linebreak when I shouldnt ...
+			scan();
+			var top = stack_top();
+			// continuation
+			if (top[0] == "table") {
+				skip_linebreak();
+				//--------------
+				// | | next row
+				if (c == '|') {
+					scan();
+					if(top.columns == null) //end of first row
+						top.columns = top.row_cells;
+					/*if (top.row_cells < top.columns) { //not enough cells in row
+						
+					} else {*/
+						top.row_cells = 0;
+						if (top.header)
+							output += options.header_cell.end;
+						else
+							output += options.cell.end;
+						output += options.row.end + options.row.start;
+						
+						if (c == '*') {
+							scan()
+							top.header = true;
+							output += options.header_cell.start;
+						} else {
+							top.header = false;
+							output += options.cell.start;
+						}
+						skip_linebreak();
+				//--------------------------
+				// | next cell or table end
+				} else {
+					top.row_cells++;
+					// end of table
+					// table ends when number of cells in current row = number of cells in first row
+					// single-row tables are not easily possible ..
+					if (top.columns != null && top.row_cells > top.columns) {
+						if (top.header)
+							output += options.header_cell.end;
+						else
+							output += options.cell.end;
+						stack.pop();
+						output += options.row.end;
+						output += options.table.end;
+						skip_linebreak();
+					// next cell
+					} else {
+						if (top.header)
+							output += options.header_cell.end + options.header_cell.start;
+						else
+							output += options.cell.end + options.cell.start;
+					}
+				}
+			// start of new table
+			} else {
+				stack.push({"0": "table", header:false, columns: null, row_cells: 0});
+				output += options.table.start + options.row.start;
+				if (c == '*') {
+					scan();
+					stack_top().header = true;
+					output += options.header_cell.start;
+				} else
+					output += options.cell.start;
 			}
 		//==================
 		// backtick... code
@@ -166,7 +283,7 @@ function parse(code, options) { //with (options){
 		// end c switch
 	}
 
-	close_all();
+	close_all(true);
 	
 	console.log(output);
 	return output;
@@ -232,16 +349,59 @@ function parse(code, options) { //with (options){
 		c = code.charAt(i);
 	}
 	
-	function close_all() {
+	function close_all(force) {
 		while (stack.length) {
 			var top = stack.pop();
 			if (top[0] == "heading") {
 				output += options.heading.end[top[1]];
+				skip_linebreak();
 			} else if (top[0] == "list") {
 				output += options.list_item.end;
 				output += options.list.end;
+				skip_linebreak();
+			} else if (top[0] == "table") {
+				if (top.header)
+					output += options.header_cell.end;
+				else
+					output += options.cell.end;
+				output += options.row.end + options.table.end;
+				skip_linebreak();
+			} else if (char_in(top[0], ["bold", "italic", "underline", "strikethrough"])) {
+				output += options[top[0]].end;
+			} else if (top[0] == "group") {
+				if (!force)
+					return;
+			} else {
+				console.log("unknown unclosed object", top);
 			}
 		}
+	}
+	
+	function do_markup(type, tags, symbol) {
+		if (can_start_markup(type)) {
+			stack.push([type]);
+			output += tags.start;
+		} else if (can_end_markup(type)) {
+			stack.pop();
+			output += tags.end;
+		} else
+			output += symbol;
+	}
+	
+	function can_start_markup(type) {
+		return (
+			(!code[i-2] || char_in(code[i-2], " \t\n({'\"")) && //prev char is one of these (or start of text)
+			!char_in(c, " \t\n,'\"") && //next char is not one of these
+			!stack_has(type) //not already inside this type of block
+		);
+	}
+	
+	function can_end_markup(type) {
+		return (
+			stack_top()[0] == type && //there is an item to close
+			!char_in(code[i-2], " \t\n,'\"") && //prev char is not one of these
+			(!c || char_in(c, " \t\n-.,:!?')}\"")) //next char is one of these (or end of text)
+		);
 	}
 	
 	function skip_linebreak() {
@@ -254,4 +414,15 @@ function parse(code, options) { //with (options){
 	}
 	
 	function stack_top() { return stack[stack.length-1] || [null]; }
+	
+	function stack_has(type) {
+		for (var i = 0; i < stack.length; i++)
+			if (stack[i][0] == type)
+				return true;
+		return false;
+	}
+	
+	function char_in(chr, list) {
+		return chr && list.indexOf(chr) != -1;
+	}
 }
