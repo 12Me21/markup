@@ -54,6 +54,46 @@ options = {
 	italic: tags("i"),
 	underline: tags("u"),
 	strikethrough: tags("s"),
+	//link
+	link: {
+		classify: function(url){
+			var ext = url.match(/.\w+$/);
+			if (ext == null)
+				return null;
+			ext = ext[0].substr(1).toLowerCase();
+			console.log(ext)
+			if (["png","jpg","jpeg","bmp","gif"].indexOf(ext) != -1)
+				return "image";
+			else if (["wav", "mp3", "ogg"].indexOf(ext) != -1)
+				return "audio";
+			else
+				return "href";
+		},
+		simple: function(url, type){
+			if (type == "image")
+				return '<img tabindex="-1" src="'+escape_html(url)+'">';
+			else if (type == "audio")
+				return '<audio controls src="'+escape_html(url)+'"></audio>';
+			else
+				return '<a href="'+escape_html(url)+'">' + escape_html(url) + "</a>";
+		},
+		start: function(url, type){
+			if (type == "image")
+				return '<img tabindex="-1" src="'+escape_html(url)+'">'; //todo: alt text somehow
+			else if (type == "audio")
+				return '<audio controls src="'+escape_html(url)+'"></audio>'; //does audio have alt text?
+			else
+				return '<a href="'+escape_html(url)+'">';
+		},
+		end: function(url, type){
+			if (type == "image")
+				return "";
+			else if (type == "audio")
+				return "";
+			else
+				return "</a";
+		},
+	},
 };
 
 function parse(code, options) { //with (options){
@@ -152,6 +192,49 @@ function parse(code, options) { //with (options){
 			// -? nothing
 			} else { //no scan here!
 				output += options.escape_text('-');
+			}
+		//==============
+		// [... link
+		} else if (c == '[') {
+			scan();
+			//-----------
+			// [ nothing
+			if (c != '[') { //no scan!
+				output += options.escape_text('[');
+			//---------------
+			// [[ link start
+			} else {
+				scan();
+				start = i;
+				while (c) {
+					scan();
+					if (c == ']') {
+						scan();
+						if (c == ']' || c == '[')
+							break;
+					}
+				}
+				var url = code.substring(start, c ? i-1 : i);
+				var type = options.link.classify(url);
+				if (c == ']') { // [[url]]
+					scan();
+					output += options.link.simple(url, type);
+				} else if (c == '[') { //[[url][...
+					scan();
+					stack.push(["link", url, type]);
+					output += options.link.start(url, type);
+				}
+			}
+		//============
+		// ]... link end
+		} else if (c == ']') {
+			scan();
+			if (c != ']')
+				output += options.escape_text('[');
+			else {
+				scan();
+				close_all(true) //TEMP!!!!
+				output += options.link.end(/*TEMP!*/);
 			}
 		//=================
 		// |... table
