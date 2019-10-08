@@ -129,8 +129,17 @@ options = {
 				return "</a";
 		},
 	},
+	quote: {
+		start: function(name) {
+			return '<blockquote cite="' + escape_html_attribute(name) + '">';
+		},
+		end: "</blockquote>",
+	},
 };
 
+//this will insert extra linebreaks at the end of most blocks.
+//it's not really easy to fix this but basically like
+//html removes these always (even with whitespace:pre) so...
 function parse(code, options) {
 	var i = -1, start;
 	var c = '';
@@ -396,6 +405,29 @@ function parse(code, options) {
 					output += options.escape_text("\x60\x60");
 				}
 			}
+		//===============
+		// >... quote
+		} else if (c == '>' && start_of_line) {
+			scan();
+			//if (c != '>')
+			//	output += options.escape_text(">");
+			//else {
+				//scan();
+				start = i;
+				while (c == ' ')
+					scan();
+				while (c && c != ' ' && c != '\n' && c != '{' && c!=':')
+					scan();
+				var name = code.substring(start, i).trim();
+				if (c == ':')
+					scan();
+				while (c == ' ')
+					scan();
+				
+				output += options.quote.start(name);
+				stack.push(["quote"]);
+				skip_linebreak();
+			//}
 		//================
 		// any other char
 		} else {
@@ -415,52 +447,64 @@ function parse(code, options) {
 	//things to do at the end of a line
 	//note that this is not called when a newline is escaped
 	function line_end() {
-		var top = stack_top();
-		if (top[0] == "heading") {
-			output += options.heading.end[stack.pop()[1]];
-		} else if (top[0] == "list") {
-			var old_indent = top[1];
-			var indent = 0;
-			while (c == ' ') {
-				scan();
-				indent++;
-			}
-			if (c == '-' && code[i + 1] == ' ') {
-				scan();
-				scan();
-				if (indent > old_indent) {
-					stack.push(["list",indent]);
-					output += options.list.start + options.list_item.start;
-				} else if (indent < old_indent) {
-					var indents = [];
-					while (1) {
-						top = stack_top();
-						if (top[0] == "list") {
-							if (top[1] == indent)
-								break;
-							else if (top[1] > indent) {
-								indents.push(stack.pop()[1]);
-								output += options.list_item.end + options.list.end;
+		var eat = false;
+		while (1) {
+			var top = stack_top();
+			if (top[0] == "heading") {
+				output += options.heading.end[stack.pop()[1]];
+				eat = true;
+			} else if (top[0] == "list") {
+				eat = true;
+				var old_indent = top[1];
+				var indent = 0;
+				while (c == ' ') {
+					scan();
+					indent++;
+				}
+				if (c == '-' && code[i + 1] == ' ') {
+					scan();
+					scan();
+					if (indent > old_indent) {
+						stack.push(["list",indent]);
+						output += options.list.start + options.list_item.start;
+					} else if (indent < old_indent) {
+						var indents = [];
+						while (1) {
+							top = stack_top();
+							if (top[0] == "list") {
+								if (top[1] == indent)
+									break;
+								else if (top[1] > indent) {
+									indents.push(stack.pop()[1]);
+									output += options.list_item.end + options.list.end;
+								} else {
+									throw Error("Bad list indentation. Got "+indent+" space while expecting: "+indents.join(", ")+", (or more)");
+								}
 							} else {
-								throw Error("Bad list indentation. Got "+indent+" space while expecting: "+indents.join(", ")+", (or more)");
+								throw Error("Bad list indentation. Item was indented less than start of list (probably)");
 							}
-						} else {
-							throw Error("Bad list indentation. Item was indented less than start of list (probably)");
 						}
+						output += options.list_item.end + options.list_item.start;
+					} else {
+						output += options.list_item.end + options.list_item.start;
 					}
-					output += options.list_item.end + options.list_item.start;
 				} else {
-					output += options.list_item.end + options.list_item.start;
+					while (stack_top()[0] == "list") {
+						stack.pop();
+						output += options.list_item.end + options.list.end;
+					}
 				}
+			} else if (top[0] == "quote") {
+				stack.pop();
+				output += options.quote.end;
+				//skip_linebreak();
+				eat = true;
+			// ...
 			} else {
-				while (stack_top()[0] == "list") {
-					stack.pop();
-					output += options.list_item.end + options.list.end;
-				}
+				if (!eat)
+					output += options.escape_text('\n');
+				break;
 			}
-		// ...
-		} else {
-			output += options.escape_text('\n');
 		}
 	}
 	
@@ -495,6 +539,9 @@ function parse(code, options) {
 			} else if (top[0] == "group") {
 				if (!force)
 					return;
+			} else if (top[0] == "quote") {
+				output += options.quote.end;
+				skip_linebreak();
 			} else {
 				console.log("unknown unclosed object", top);
 			}
