@@ -1,17 +1,39 @@
+// Escapes html text
+// & -> &amp;
+// < -> &lt;
+// \n -> <br>
+// (you could use white-space pre or whatever instead of <br>,
+// but firefox had a bug with copying text from there,
+// which I believe is fixed now, but better to be safe..)
 function escape_html(text){
-	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+}
+
+// Only escapes & <, doesn't replace newlines
+function escape_html_raw(text){
+	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+}
+
+//escapes html attributes (no unquoted attributes!)
+// & -> &apos;
+// " -> &quot;
+// ' -> &#39; (&apos; will work but is not part of the standard)
+// I don't think newlines need to be escaped here
+function escape_html_attribute(text){
+	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 function tags(name) {
 	return {start: "<"+name+">", end: "</"+name+">"};
 }
 
+//this contains all the html + html generation functions that the parser uses.
 options = {
 	escape_text: escape_html,
 	
 	heading: {
-		start: ["<h1>","<h2>","<h3>","<h4>","<h5>","<h6>"],
-		end: ["</h1>","</h2>","</h3>","</h4>","</h5>","</h6>"],
+		start: ["<h1>","<h2>","<h3>"],
+		end: ["</h1>","</h2>","</h3>"],
 	},
 	horizontal_line: "<hr>",
 	//code
@@ -56,6 +78,8 @@ options = {
 	strikethrough: tags("s"),
 	//link
 	link: {
+		//this gets called after a url is read, to determine what type of link it is
+		//(the parser itself doesn't care, but the value it returns is passed to the other link functions)
 		classify: function(url){
 			var ext = url.match(/.\w+$/);
 			if (ext == null)
@@ -64,31 +88,42 @@ options = {
 			console.log(ext)
 			if (["png","jpg","jpeg","bmp","gif"].indexOf(ext) != -1)
 				return "image";
-			else if (["wav", "mp3", "ogg"].indexOf(ext) != -1)
+			else if (["wav","mp3","ogg"].indexOf(ext) != -1)
 				return "audio";
+			else if (["mp4"].indexOf(ext) != -1)
+				return "video";
 			else
 				return "href";
 		},
+		// generate a simple link, for [[url]]
 		simple: function(url, type){
 			if (type == "image")
-				return '<img tabindex="-1" src="'+escape_html(url)+'">';
+				return '<img tabindex="-1" src="'+escape_html_attribute(url)+'">';
 			else if (type == "audio")
-				return '<audio controls src="'+escape_html(url)+'"></audio>';
+				return '<audio controls src="'+escape_html_attribute(url)+'"></audio>';
+			else if (type == "video")
+				return '<video controls tabindex="-1" src="'+escape_html_attribute(url)+'"></video>';
 			else
-				return '<a href="'+escape_html(url)+'">' + escape_html(url) + "</a>";
+				return '<a href="'+escape_html_attribute(url)+'">' + escape_html(url) + "</a>";
 		},
+		// link start
 		start: function(url, type){
 			if (type == "image")
-				return '<img tabindex="-1" src="'+escape_html(url)+'">'; //todo: alt text somehow
+				return '<img tabindex="-1" src="'+escape_html_attribute(url)+'">'; //todo: alt text somehow
 			else if (type == "audio")
-				return '<audio controls src="'+escape_html(url)+'"></audio>'; //does audio have alt text?
+				return '<audio controls src="'+escape_html_attribute(url)+'"></audio>'; //does audio have alt text?
+			else if (type == "video")
+				return '<video controls tabindex="-1" src="'+escape_html_attribute(url)+'"></video>';
 			else
-				return '<a href="'+escape_html(url)+'">';
+				return '<a href="'+escape_html_attribute(url)+'">';
 		},
+		// link end (usually the url isn't used here)
 		end: function(url, type){
 			if (type == "image")
 				return "";
 			else if (type == "audio")
+				return "";
+			else if (type == "video")
 				return "";
 			else
 				return "</a";
@@ -96,18 +131,17 @@ options = {
 	},
 };
 
-function parse(code, options) { //with (options){
+function parse(code, options) {
 	var i = -1, start;
-	var c;
-	scan();
+	var c = '';
 	
 	var output = "";
 	var stack = [];
 	var start_of_line = true;
 	
+	scan();
+	
 	while (c) {
-		start_of_line = i <= 0 || code[i - 1] == '\n';
-		
 		//============
 		// Line break
 		if (c == '\n') {
@@ -124,6 +158,8 @@ function parse(code, options) { //with (options){
 		} else if (c == '{') {
 			scan();
 			stack.push(["group"]);
+			skip_linebreak();
+			start_of_line = true;
 		//=============
 		// } group end
 		} else if (c == '}') {
@@ -154,6 +190,7 @@ function parse(code, options) { //with (options){
 		// #... Heading
 		} else if (c == '#' && start_of_line) { //todo: prevent nested headings somehow
 			var heading_level = 0;
+			scan();
 			while (c == '#') {
 				heading_level++;
 				scan();
@@ -240,10 +277,10 @@ function parse(code, options) { //with (options){
 		// |... table
 		} else if (c == '|') {
 			// I think somewhere here I use skip_linebreak when I shouldnt ...
-			scan();
 			var top = stack_top();
 			// continuation
 			if (top[0] == "table") {
+				scan();
 				skip_linebreak();
 				//--------------
 				// | | next row
@@ -294,8 +331,9 @@ function parse(code, options) { //with (options){
 							output += options.cell.end + options.cell.start;
 					}
 				}
-			// start of new table
-			} else {
+			// start of new table (must be at beginning of line)
+			} else if (start_of_line) {
+				scan();
 				stack.push({"0": "table", header:false, columns: null, row_cells: 0});
 				output += options.table.start + options.row.start;
 				if (c == '*') {
@@ -304,6 +342,9 @@ function parse(code, options) { //with (options){
 					output += options.header_cell.start;
 				} else
 					output += options.cell.start;
+			} else {
+				scan();
+				output += options.escape_text("|");
 			}
 		//==================
 		// backtick... code
@@ -374,60 +415,60 @@ function parse(code, options) { //with (options){
 	//things to do at the end of a line
 	//note that this is not called when a newline is escaped
 	function line_end() {
-		while (1) {
-			var top = stack_top();
-			if (top[0] == "heading") {
-				output += options.heading.end[stack.pop()[1]];
-			} else if (top[0] == "list") {
-				var old_indent = top[1];
-				var indent = 0;
-				while (c == ' ') {
-					scan();
-					indent++;
-				}
-				if (c == '-' && code[i + 1] == ' ') {
-					scan();
-					scan();
-					if (indent > old_indent) {
-						stack.push(["list",indent]);
-						output += options.list.start + options.list_item.start;
-					} else if (indent < old_indent) {
-						var indents = [];
-						while (1) {
-							top = stack_top();
-							if (top[0] == "list") {
-								if (top[1] == indent)
-									break;
-								else if (top[1] > indent) {
-									indents.push(stack.pop()[1]);
-									output += options.list_item.end + options.list.end;
-								} else {
-									throw Error("Bad list indentation. Got "+indent+" space while expecting: "+indents.join(", ")+", (or more)");
-								}
-							} else {
-								throw Error("Bad list indentation. Item was indented less than start of list (probably)");
-							}
-						}
-						output += options.list_item.end + options.list_item.start;
-					} else {
-						output += options.list_item.end + options.list_item.start;
-					}
-				} else {
-					while (stack_top()[0] == "list") {
-						stack.pop();
-						output += options.list_item.end + options.list.end;
-					}
-				}
-				break; // is this right?
-			// ...
-			} else {
-				output += options.escape_text('\n'); //TODO!!!
-				break;
+		var top = stack_top();
+		if (top[0] == "heading") {
+			output += options.heading.end[stack.pop()[1]];
+		} else if (top[0] == "list") {
+			var old_indent = top[1];
+			var indent = 0;
+			while (c == ' ') {
+				scan();
+				indent++;
 			}
+			if (c == '-' && code[i + 1] == ' ') {
+				scan();
+				scan();
+				if (indent > old_indent) {
+					stack.push(["list",indent]);
+					output += options.list.start + options.list_item.start;
+				} else if (indent < old_indent) {
+					var indents = [];
+					while (1) {
+						top = stack_top();
+						if (top[0] == "list") {
+							if (top[1] == indent)
+								break;
+							else if (top[1] > indent) {
+								indents.push(stack.pop()[1]);
+								output += options.list_item.end + options.list.end;
+							} else {
+								throw Error("Bad list indentation. Got "+indent+" space while expecting: "+indents.join(", ")+", (or more)");
+							}
+						} else {
+							throw Error("Bad list indentation. Item was indented less than start of list (probably)");
+						}
+					}
+					output += options.list_item.end + options.list_item.start;
+				} else {
+					output += options.list_item.end + options.list_item.start;
+				}
+			} else {
+				while (stack_top()[0] == "list") {
+					stack.pop();
+					output += options.list_item.end + options.list.end;
+				}
+			}
+		// ...
+		} else {
+			output += options.escape_text('\n');
 		}
 	}
 	
 	function scan() {
+		if (c == '\n' || !c)
+			start_of_line = true;
+		else if (c != ' ')
+			start_of_line = false;
 		i++;
 		c = code.charAt(i);
 	}
@@ -488,12 +529,12 @@ function parse(code, options) { //with (options){
 	}
 	
 	function skip_linebreak() {
-		while (c == ' ' || c == '\t')
-			scan();
+		//while (c == ' ')
+		//	scan();
 		if (c == '\n')
 			scan();
-		while (c == ' ' || c == '\t')
-			scan();
+		//while (c == ' ')
+		//	scan();
 	}
 	
 	function stack_top() { return stack[stack.length-1] || [null]; }

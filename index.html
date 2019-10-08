@@ -1,13 +1,18 @@
 <meta charset="utf8">
 <textarea id="$textarea"></textarea>
-<button onclick="$output.innerHTML = parse($textarea.value, options)">parse</button>
+<button onclick="$html.innerHTML = escape_html_raw($output.innerHTML = parse($textarea.value, options))">parse</button>
 <div id="$output"></div>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="sb_theme.css">
 <script src="sbhighlight.js"></script>
 <script src="parse2.js"></script>
+<pre id="$html"></pre>
 
 <style>
+body {
+	white-space: pre-wrap;
+}
+
 img{
 	max-width: 40vw;
 	max-height: 10vh;
@@ -18,4 +23,17 @@ img:focus {
 	max-width: 100%;
 	max-height: 75vh;
 }
+
+
+video{
+	max-width: 40vw;
+	max-height: 10vh;
+	transition: all 0.25s ease;
+}
+
+video:focus {
+	max-width: 100%;
+	max-height: 75vh;
+}
+
 </style>

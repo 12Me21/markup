@@ -13,11 +13,10 @@ body {
 	margin-bottom: 100vh;
 } 
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
 	font-weight: 600;
 	line-height: 1.25;
-	margin-bottom: 16px;
-	margin-top: 24px;
+	margin: 0;
 }
 
 img {
@@ -29,13 +28,11 @@ h1 {
 	border-bottom: 1px solid #eaecef;
 	/* padding-bottom: .3em; */
 	font-size: 2em;
-	margin: .67em 0;
 }
 
 h2 {
 	font-size: 1.5em;
 	border-bottom: 1px solid #eaecef;
-	/* padding-bottom: .3em; */
 }
 
 h3 {
@@ -48,58 +45,6 @@ a {
 
 a:hover {
 	text-decoration: underline;
-}
-
-a.missing {
-	color: red;
-}
-
-a.category {
-	font-style: italic;
-}
-
-.navigation ul {
-	list-style: none;
-}
-
-.navigation li {
-	display: inline-block;
-}
-
-.navigation a {
-	border: 1px solid gray;
-	padding: 0.25em 0.5em;
-}
-
-.navigation .up a::before {
-	content: "Category: ";
-}
-
-/* .navigation .up a::after { */
-	/* content: ")"; */
-/* } */
-
-.navigation .next a::before {
-	content: "Next (";
-}
-
-.navigation .next a::after {
-	content: ") >";
-}
-
-.navigation .previous a::before {
-	content: "< Previous (";
-}
-
-.navigation .previous a::after {
-	content: ")";
-}
-
-.error-message {
-	background-color: #FDD;
-	padding: 0.5em;
-	color: #700;
-	border: 3px outset red;
 }
 
 pre {
@@ -130,8 +75,8 @@ code {
 
 table {
 	overflow: auto;
-	margin-bottom: 1em;
-	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-top: 0em;
 	border-collapse: collapse;
 	border-spacing: 0;
 	word-wrap: break-word;
@@ -169,7 +114,6 @@ hr {
 	padding: 0;
 }
 
-
 sup {
 	top: -.5em;
 	font-size: 75%;
@@ -181,88 +125,4 @@ sup {
 ul {
 	margin-bottom: 0;
 	padding-left: 1em;
-}
-
-input[id^="syntax"] {
-	display: none;
-	height: 0;
-}
-.syntax-full {
-	display: none;
-	height: 0;
-}
-
-label[for^="syntax"] {
-	border: 1px solid black;
-}
-
-input[id^="syntax"]:checked ~.syntax-short {
-	display: none;
-	height: 0;
-}
-input[id^="syntax"]:checked ~.syntax-full {
-	display: initial;
-	height: unset;
-}
-
-/* example theme */
-
-pre.highlight-smilebasic {
-	color: rgb(198,175,157); /* default text color (for non-highlighted sections) */
-	background-color: rgb( 42, 33, 28); /* code block background color */
-}
-pre.highlight-smilebasic > span {
-	background-color: transparent; /* reset background color (don't change this probably) */
-}
-
-/* WORDS */
-
-/* keywords (put this first) */
-pre.highlight-smilebasic .keyword  {color:rgb( 55,163,237);}
-/* variables */
-pre.highlight-smilebasic .variable {color:rgb(255,255,255);}
-/* built in functions */
-pre.highlight-smilebasic .function {color:rgb(200,122,237);} 
-/* labels */
-pre.highlight-smilebasic .label    {color:rgb(128,255,  0);}
-/* strings */
-pre.highlight-smilebasic .string   {color:rgb(  0,255, 64);}
-/* comments */
-pre.highlight-smilebasic .comment  {color:rgb(102,102,102);}
-
-/* operators and named operators (speical) */
-pre.highlight-smilebasic .operator , pre.highlight-smilebasic .word-operator {color:rgb(229,193, 56);}
-/* numbers and true/false (special) */
-pre.highlight-smilebasic .number , pre.highlight-smilebasic .true-false      {color:rgb(255, 58,131);}
-
-pre.highlight-sbconsole {
-	background-color: black;
-	color: white;
-}
-
-pre.highlight-sbsyntax  {
-	color: gray;
-}
-
-pre.highlight-sbsyntax  .keyword, pre.highlight-sbsyntax .function {
-	font-weight: bold;
-	color: black;
-}
-
-pre.highlight-sbsyntax  .variable {
-	font-style: italic;
-	background-color: #FFF;
-	color: black;
-}
-
-/* new */
-pre.highlight-smilebasic > .def + .variable {animation: color-change 1s infinite;}
-@keyframes color-change {
-	0% { color: red; }
-	50% { color: blue; }
-	100% { color: red; }
-}
-
-pre a {
-	text-decoration:none;
 }
