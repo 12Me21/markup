@@ -126,7 +126,7 @@ options = {
 			else if (type == "video")
 				return "";
 			else
-				return "</a";
+				return "</a>";
 		},
 	},
 	quote: {
