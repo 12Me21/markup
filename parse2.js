@@ -276,7 +276,7 @@ function parse(code, options) {
 		} else if (c == ']') {
 			scan();
 			if (c != ']')
-				output += options.escape_text('[');
+				output += options.escape_text(']');
 			else {
 				scan();
 				close_all(true) //TEMP!!!!
