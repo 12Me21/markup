@@ -494,6 +494,7 @@ function parse(code, options) {
 						output += options.list_item.end + options.list.end;
 					}
 				}
+				break;
 			} else if (top[0] == "quote") {
 				stack.pop();
 				output += options.quote.end;
