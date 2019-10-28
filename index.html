@@ -1,14 +1,27 @@
 <meta charset="utf8">
-<textarea id="$textarea"></textarea>
-<button onclick="$html.innerHTML = escape_html_raw($output.innerHTML = parse($textarea.value, options))">parse</button>
+<textarea id="$textarea" oninput="window.setTimeout(update,10)"></textarea>
+<button onclick="update()">force update</button>
 <div id="$output"></div>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="sb_theme.css">
 <script src="sbhighlight.js"></script>
 <script src="parse2.js"></script>
+<hr>
 <pre id="$html"></pre>
 
+<script>
+function update(){
+console.log("updating");
+	$html.innerHTML = escape_html_raw($output.innerHTML = parse($textarea.value, options))
+}
+</script>
+
 <style>
+textarea {
+	width: 100%;
+	height: 30vw;
+}
+
 body {
 	white-space: pre-wrap;
 }
