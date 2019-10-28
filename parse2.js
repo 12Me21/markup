@@ -60,6 +60,8 @@ options = {
 				prevType = type;
 			}
 		}, opt);
+		if (prevType)
+			output += "</span>";
 		output += "</pre>";
 		return output;
 	},
@@ -396,6 +398,7 @@ function parse(code, options) {
 						scan();
 					} else {
 						i = code.length;
+						scan();
 					}
 					skip_linebreak();
 				//--------------------
