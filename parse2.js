@@ -18,11 +18,18 @@ function escape_html_raw(text){
 // & -> &apos;
 // " -> &quot;
 // ' -> &#39; (&apos; will work but is not part of the standard)
-// : -> &#58; to block href="javascript:...". this is not ideal but it works.
 // I don't think newlines need to be escaped here
 function escape_html_attribute(text){
-	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/:/g, "&#58;");
+	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
+
+//escapes href attribute, preventing unsafe urls
+function escape_html_href(text){
+	if(!/^ *https?:\/\//.test(text))
+		text = "//" + text;
+	return escape_html_attribute(text);
+}
+
 
 function tags(name) {
 	return {start: "<"+name+">", end: "</"+name+">"};
@@ -107,7 +114,7 @@ options = {
 			else if (type == "video")
 				return '<video controls tabindex="-1" src="'+escape_html_attribute(url)+'"></video>';
 			else
-				return '<a href="'+escape_html_attribute(url)+'">' + escape_html(url) + "</a>";
+				return '<a href="'+escape_html_href(url)+'">' + escape_html(url) + "</a>";
 		},
 		// link start
 		start: function(url, type){
@@ -118,7 +125,7 @@ options = {
 			else if (type == "video")
 				return '<video controls tabindex="-1" src="'+escape_html_attribute(url)+'"></video>';
 			else
-				return '<a href="'+escape_html_attribute(url)+'">';
+				return '<a href="'+escape_html_href(url)+'">';
 		},
 		// link end (usually the url isn't used here)
 		end: function(url, type){
