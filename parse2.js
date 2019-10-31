@@ -18,9 +18,10 @@ function escape_html_raw(text){
 // & -> &apos;
 // " -> &quot;
 // ' -> &#39; (&apos; will work but is not part of the standard)
+// : -> &#58; to block href="javascript:...". this is not ideal but it works.
 // I don't think newlines need to be escaped here
 function escape_html_attribute(text){
-	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/:/g, "&#58;");
 }
 
 function tags(name) {
