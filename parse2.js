@@ -270,7 +270,7 @@ function parse(code, options) {
 							break;
 					}
 				}
-				var url = code.substring(start, c ? i-1 : i);
+				var url = code.substring(start, c ? i-1 : i).trim();
 				var type = options.link.classify(url);
 				if (c == ']') { // [[url]]
 					scan();
