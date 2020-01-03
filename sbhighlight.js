@@ -1,7 +1,10 @@
 var highlight_smilebasic = (function(){
 	//keywords that don't have an expression after them
 	var keywords=[
-		"BREAK","COMMON","CONTINUE","ELSE","END","ENDIF","REM","REPEAT","STOP","THEN","WEND",
+		"BREAK","COMMON","CONTINUE","ELSE","END","ENDIF","REM","REPEAT","THEN","WEND",
+	];
+	var keywords_sb3=[
+		"STOP"	
 	];
 	var keywords_sb4=[
 		"OTHERWISE","ENDCASE","LOOP","ENDLOOP"
@@ -11,7 +14,7 @@ var highlight_smilebasic = (function(){
 		"CALL","DATA","DEC","DIM","ELSEIF","EXEC","FOR","GOSUB","GOTO","IF","INC","INPUT","LINPUT","NEXT","ON","OUT","PRINT","READ","RESTORE","RETURN","SWAP","UNTIL","USE","VAR","WHILE",
 	];
 	var argKeywords_sb4=[
-		"CASE","WHEN","DEFOUT","TPRINT","CONST","ENUM"
+		"CASE","WHEN","DEFOUT","TPRINT","CONST","ENUM",
 	];
 	var builtinFunctions=[
 		"ABS","ACCEL","ACLS","ACOS","ARYOP","ASC","ASIN","ATAN","ATTR","BACKCOLOR","BACKTRACE","BEEP","BGMCHK","BGMCLEAR","BGMCONT","BGMPAUSE","BGMPLAY","BGMSET","BGMSETD","BGMSTOP","BGMVAR","BGMVOL","BIN$","BIQUAD","BQPARAM","BREPEAT","BUTTON","CEIL","CHKCALL","CHKCHR","CHKFILE","CHKLABEL","CHKMML","CHKVAR","CHR$","CLASSIFY","CLIPBOARD","CLS","COLOR","CONTROLLER","COPY","COS","COSH","DEG","DELETE","DIALOG","DTREAD","EFCSET","EFCWET","EXP","FADE","FADECHK","FFT","FFTWFN","FILES","FILL","FLOOR","FORMAT$","GBOX","GCIRCLE","GCLIP","GCLS","GCOLOR","GCOPY","GFILL","GLINE","GLOAD","GPAINT","GPSET","GPUTCHR","GSAVE","GTRI","GYROA","GYROSYNC","GYROV","HEX$","IFFT","INKEY$","INSTR","KEY","LEFT$","LEN","LOAD","LOCATE","LOG","MAX","MID$","MIN","OPTION","PCMCONT","PCMSTOP","PCMSTREAM","PCMVOL","POP","POW","PRGDEL","PRGEDIT","PRGGET$","PRGINS","PRGNAME$","PRGSET","PRGSIZE","PROJECT","PUSH","RAD","RANDOMIZE","RENAME","RGB","RIGHT$","RINGCOPY","RND","RNDF","ROUND","RSORT","SAVE","SCROLL","SGN","SHIFT","SIN","SINH","SNDSTOP","SORT","SPANIM","SPCHK","SPCHR","SPCLR","SPCOL","SPCOLOR","SPCOLVEC","SPDEF","SPFUNC","SPHIDE","SPHITINFO","SPHITRC","SPHITSP","SPHOME","SPLINK","SPOFS","SPPAGE","SPROT","SPSCALE","SPSET","SPSHOW","SPSTART","SPSTOP","SPUNLINK","SPUSED","SPVAR","SQR","STICK","STR$","SUBST$","TALK","TALKCHK","TALKSTOP","TAN","TANH","TMREAD","TOUCH","UNSHIFT","VAL","VSYNC","WAIT","WAVSET","WAVSETA","XSCREEN",
@@ -25,6 +28,7 @@ var highlight_smilebasic = (function(){
 	];
 	var builtinFunctions_sb4=[
 		"PCMPOS","TYPEOF","ARRAY#","ARRAY%","ARRAY$","RESIZE","INSERT","REMOVE","INSPECT","DEFARGC","DEFARG","DEFOUTC","INT","FLOAT","LAST","FONTINFO","PERFBEGIN","PERFEND","SYSPARAM","METAEDIT","METALOAD","METASAVE","XCTRLSTYLE","MOUSE","MBUTTON","IRSTART","IRSTOP","IRSTATE","IRREAD","IRSPRITE","KEYBOARD","TCPIANO","TCHOUSE","TCROBOT","TCFISHING","TCBIKE","TCVISOR","LOADG","LOADV","SAVEG","SAVEV","ANIMDEF","TSCREEN","TPAGE","TCOLOR","TLAYER","TPUT","TFILL","THOME","TOFS","TROT","TSCALE","TSHOW","THIDE","TBLEND","TANIM","TSTOP","TSTART","TCHK","TVAR","TCOPY","TSAVE","TLOAD","TARRAY","TUPDATE","TFUNC","GTARGET","RGBF","HSV","GPGET","GARRAY","GUPDATE","GSAMPLE","SPLAYER","LAYER","LMATRIX","LFILTER","LCLIP","BEEPPIT","BEEPPAN","BEEPVOL","BEEPSTOP","BGMPITCH","BGMWET","EFCEN","SNDMSBAL","SNDMVOL","PRGSEEK","XSUBSCREEN","ENVSTAT","ENVTYPE","ENVLOAD","ENVSAVE","ENVINPUT$","ENVFOCUS","ENVPROJECT","ENVLOCATE","PUSHKEY","HELPGET","HELPINFO","UISTATE","UIMASK","UIPUSHCMPL","DATE$","TIME$","RESULT","CALLIDX","FREEMEM","MILLISEC","MAINCNT",
+		"STOP",
 	];
 	//SB3 only
 	var systemVariables=["CALLIDX","CSRX","CSRY","CSRZ","DATE$","ERRLINE","ERRNUM","ERRPRG","EXTFEATURE","FREEMEM","HARDWARE","MAINCNT","MICPOS","MICSIZE","MILLISEC","MPCOUNT","MPHOST","MPLOCAL","PCMPOS","PRGSLOT","RESULT","SYSBEEP","TABSTEP","VERSION"];
@@ -103,7 +107,7 @@ var highlight_smilebasic = (function(){
 					type="keyword";
 					cssType="keyword";
 				//keywords without an expression after them
-				}else if(keywords.indexOf(upper)>=0 || sb4!=false && keywords_sb4.indexOf(upper)>=0){
+				}else if(keywords.indexOf(upper)>=0 || sb4==false && keywords_sb3.indexOf(upper)>=0 || sb4!=false && keywords_sb4.indexOf(upper)>=0){
 					type="keyword";
 					cssType="keyword";
 				//keywords w/ and expression after
@@ -405,6 +409,17 @@ var highlight_smilebasic = (function(){
 			break;case '?':
 				next();
 				push("argkeyword","question keyword");
+			break;case '\':
+				next();
+				if (sb4==false) {
+					push(undefined,false);
+				} else {
+					while (c && c!='\n' && c!='\r') {
+						next();
+					}
+					next();
+					push("comment")
+				}
 			break;default:
 				next();
 				push(undefined,false);
