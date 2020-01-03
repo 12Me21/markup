@@ -418,7 +418,7 @@ var highlight_smilebasic = (function(){
 						next();
 					}
 					next();
-					push("comment")
+					push("whitespace")
 				}
 			break;default:
 				next();
