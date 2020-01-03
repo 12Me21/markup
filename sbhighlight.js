@@ -409,7 +409,7 @@ var highlight_smilebasic = (function(){
 			break;case '?':
 				next();
 				push("argkeyword","question keyword");
-			break;case '\':
+			break;case '\\':
 				next();
 				if (sb4==false) {
 					push(undefined,false);
